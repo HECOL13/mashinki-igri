@@ -85,7 +85,6 @@
     box-shadow: 0 0 12px rgba(255,210,90,.25);
   }
 
-  /* КУБОК ДЛЯ "РЕКОРД" */
   .trophyIcon{
     width:22px;
     height:22px;
@@ -425,7 +424,7 @@
   .modal.open{display:flex}
 
   .modalCard{
-    width:min(920px, 96vw);
+    width:min(880px, 96vw);
     max-height: calc(100vh - 40px);
     overflow:auto;
     border-radius:18px;
@@ -531,7 +530,6 @@
 <div class="frame">
   <div class="board">
     <div class="layout">
-
       <!-- LEFT -->
       <aside class="left">
         <div class="panel-title"><div class="cup"></div><span>ТУРНИРНАЯ ТАБЛИЦА</span></div>
@@ -671,7 +669,7 @@
       </div>
     </div>
 
-    <div class="hint">Закрыть: “Закрыть”, Esc или клик по тёмному фону.</div>
+    <div class="hint">Закрыть: Esc или клик по тёмному фону.</div>
 
     <div class="modalActions">
       <button class="btn" id="menuSave">СОХРАНИТЬ</button>
@@ -683,9 +681,8 @@
 <!-- SETTINGS MODAL -->
 <div class="modal" id="settingsModal" aria-hidden="true">
   <div class="modalCard">
-    <h3>Настройка “URL → +метры” и горячие клавиши</h3>
+    <h3>Настройка “URL → +метры”</h3>
 
-    <!-- URL RULES -->
     <div class="box">
       <div class="grid2" style="grid-template-columns: 1fr 1fr 160px;">
         <div>
@@ -710,53 +707,13 @@
     </div>
 
     <div class="box">
-      <div style="color:var(--muted); font-weight:1000; font-size:12px; margin-bottom:8px;">Список правил URL</div>
+      <div style="color:var(--muted); font-weight:1000; font-size:12px; margin-bottom:8px;">Список правил</div>
       <div id="rulesList"></div>
-      <div class="hint">
-        Для Stream2earn лучше использовать ссылку через <b>#</b> (вида <b>#c=ru&amp;m=5</b>).  
-        Важно: тип “URL” должен именно <b>открывать ссылку</b> (GET), не POST.
-      </div>
     </div>
 
-    <!-- KEYBINDS -->
-    <div class="box">
-      <div style="color:var(--muted); font-weight:1000; font-size:12px; margin-bottom:8px;">Горячие клавиши (бинды)</div>
-
-      <div class="grid2" style="grid-template-columns: 1fr 1fr 160px;">
-        <div>
-          <div class="lbl">СТРАНА</div>
-          <select id="bindCountry" class="inp">
-            <option>Беларусь</option>
-            <option>Россия</option>
-            <option>Украина</option>
-            <option>Грузия</option>
-            <option>Казахстан</option>
-          </select>
-        </div>
-        <div>
-          <div class="lbl">+ МЕТРОВ</div>
-          <input class="inp" id="bindMeters" type="number" value="5" />
-        </div>
-        <div>
-          <div class="lbl">&nbsp;</div>
-          <button class="btn" id="bindPickKey" style="width:100%;">ВЫБРАТЬ КЛАВИШУ</button>
-        </div>
-      </div>
-
-      <div style="margin-top:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <div style="min-width:260px; flex:1;">
-          <div class="lbl">КОД КЛАВИШИ</div>
-          <input class="inp" id="bindKeyCode" placeholder="например KeyQ, Digit1, F8" readonly />
-        </div>
-        <button class="btn" id="bindCreate">ДОБАВИТЬ БИНД</button>
-      </div>
-
-      <div class="hint">
-        Совет: для OBS/стрима удобнее использовать F-клавиши (F1–F12) или цифры (Digit1..Digit0).  
-        Бинд сработает, даже если открыт сайт в фоне, но <b>не</b> сработает, когда ты печатаешь в поле ввода.
-      </div>
-
-      <div id="bindsList" style="margin-top:10px;"></div>
+    <div class="hint">
+      Используй <b>#mode=push</b> (обычно программы не режут hash).<br/>
+      Пример: <b>#mode=push&amp;sid=main&amp;c=ua&amp;m=10</b>
     </div>
 
     <div class="modalActions">
@@ -777,6 +734,11 @@
   </div>
 </div>
 
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
 <script>
   // -----------------------------
   // Data
@@ -790,9 +752,45 @@
   ];
 
   const CODE_TO_COUNTRY = Object.fromEntries(COUNTRIES.map(c => [c.code, c.name]));
-  const NAME_TO_CODE    = Object.fromEntries(COUNTRIES.map(c => [c.name, c.code]));
+  const NAME_TO_CODE = Object.fromEntries(COUNTRIES.map(c => [c.name, c.code]));
 
   const MAX_METERS = 2000;
+
+  // -----------------------------
+  // Firebase init
+  // -----------------------------
+  // ВАЖНО: ВСТАВЬ СЮДА СВОЙ firebaseConfig ИЗ FIREBASE CONSOLE
+  const firebaseConfig = {
+    apiKey: "PASTE_HERE",
+    authDomain: "PASTE_HERE",
+    databaseURL: "PASTE_HERE",
+    projectId: "PASTE_HERE",
+    storageBucket: "PASTE_HERE",
+    messagingSenderId: "PASTE_HERE",
+    appId: "PASTE_HERE"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  firebase.auth().signInAnonymously().catch(console.error);
+
+  // -----------------------------
+  // Helpers: params from ? and #
+  // -----------------------------
+  function getParamsBoth(){
+    const qs = new URLSearchParams(window.location.search);
+    const hash = (window.location.hash || "").replace(/^#/, "");
+    const hs = new URLSearchParams(hash);
+
+    const get = (k) => (hs.get(k) ?? qs.get(k) ?? "").trim();
+
+    return {
+      mode: (get("mode") || "overlay").toLowerCase(), // overlay | push
+      sid:  (get("sid")  || "main"),
+      c:    (get("c")    || "").toLowerCase(),
+      m:    parseInt(get("m"), 10)
+    };
+  }
 
   // -----------------------------
   // Flags
@@ -838,7 +836,6 @@
   const LS_STATE = "race_state_v6";
   const LS_RULES = "race_rules_v7";
   const LS_CFG   = "race_cfg_v6";
-  const LS_BINDS = "race_binds_v1";
 
   function loadJSON(key, fallback){
     try{
@@ -906,43 +903,6 @@
   document.addEventListener("pointerdown", ()=> audioMgr.ensureCtx(), {once:true});
 
   // -----------------------------
-  // Cross-tab auto-update (автообновление)
-  // -----------------------------
-  const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("race_channel_v4") : null;
-
-  function broadcastState(){
-    if(!bc) return;
-    bc.postMessage({ type:"stateSync", state, cfg });
-  }
-
-  if(bc){
-    bc.onmessage = (ev)=>{
-      const msg = ev.data;
-      if(!msg) return;
-      if(msg.type === "boost"){
-        // быстрый путь: применить прибавку
-        applyBoostInternal(msg.country, Number(msg.add)||0, true);
-      }else if(msg.type === "stateSync" && msg.state){
-        // принять полное состояние
-        mergeStateFromRemote(msg.state);
-        if(msg.cfg) cfg = { ...cfgDefault, ...msg.cfg };
-        renderAll();
-      }
-    };
-  }
-
-  // если другая вкладка сохранила localStorage — обновимся
-  window.addEventListener("storage", (e)=>{
-    if(e.key === LS_STATE && e.newValue){
-      loadStateFromStorage();
-      renderAll();
-    }
-    if(e.key === LS_CFG && e.newValue){
-      cfg = { ...cfgDefault, ...loadJSON(LS_CFG,{}) };
-    }
-  });
-
-  // -----------------------------
   // State
   // -----------------------------
   let state = {
@@ -954,25 +914,8 @@
     savedAt: Date.now()
   };
 
-  function mergeStateFromRemote(remote){
-    if(!remote || !Array.isArray(remote.countries)) return;
-    const byName = new Map(remote.countries.map(x=>[x.name, x]));
-    state.countries = state.countries.map(c=>{
-      const r = byName.get(c.name);
-      return r ? { ...c, meters:+r.meters||0, wins:+r.wins||0 } : c;
-    });
-    state.record = +remote.record || 0;
-    state.lastWinner = remote.lastWinner || "НЕТ";
-    state.timeLeft = Math.max(0, +remote.timeLeft || 0);
-    state.running = !!remote.running;
-    state.savedAt = +remote.savedAt || Date.now();
-    saveState(false);
-  }
-
-  function loadStateFromStorage(){
-    const saved = loadJSON(LS_STATE, null);
-    if(!(saved && Array.isArray(saved.countries))) return;
-
+  const saved = loadJSON(LS_STATE, null);
+  if(saved && Array.isArray(saved.countries)){
     const byName = new Map(saved.countries.map(x=>[x.name,x]));
     state.countries = state.countries.map(c=>{
       const s = byName.get(c.name);
@@ -983,24 +926,15 @@
     state.timeLeft = Math.max(0, +saved.timeLeft || 0);
     state.running = !!saved.running;
     state.savedAt = +saved.savedAt || Date.now();
-  }
 
-  // init from storage
-  (function initState(){
-    loadStateFromStorage();
-    // компенсация времени
     if(state.running){
       const elapsed = Math.floor((Date.now() - state.savedAt)/1000);
       state.timeLeft = Math.max(0, state.timeLeft - elapsed);
       if(state.timeLeft === 0) state.running = false;
     }
-  })();
-
-  function saveState(doBroadcast=true){
-    state.savedAt = Date.now();
-    saveJSON(LS_STATE, state);
-    if(doBroadcast) broadcastState();
   }
+
+  function saveState(){ state.savedAt = Date.now(); saveJSON(LS_STATE, state); }
 
   // -----------------------------
   // UI refs
@@ -1151,23 +1085,14 @@
     winner.wins += 1;
     state.record = Math.max(state.record, winner.meters);
     renderAll();
-    saveState(true);
+    saveState();
     showWinOverlay(winner.name);
   }
 
   // -----------------------------
-  // URL helpers
+  // Boost applying
   // -----------------------------
-  function baseUrl(){
-    const u = new URL(window.location.href);
-    u.search = ""; u.hash = "";
-    return u.toString();
-  }
-
-  // -----------------------------
-  // Boost applying (многоразово) + автообновление (BC + storage)
-  // -----------------------------
-  function applyBoostInternal(country, add, fromRemote=false){
+  function applyBoostInternal(country, add){
     const st = state.countries.find(x=>x.name===country);
     if(!st) return false;
 
@@ -1182,49 +1107,12 @@
     updateLeaderHighlight();
     renderTable();
     renderHeader();
-    saveState(!fromRemote);
-
-    if(!fromRemote && bc){
-      bc.postMessage({ type:"boost", country, add });
-    }
+    saveState();
     return true;
   }
 
   // -----------------------------
-  // Boost from URL: поддержка ? и # (для Stream2earn лучше #)
-  // Форматы:
-  //   ?c=ru&m=5
-  //   #c=ru&m=5
-  // -----------------------------
-  function applyBoostFromUrl(){
-    const qs = new URLSearchParams(window.location.search);
-    let c = (qs.get("c") || "").toLowerCase().trim();
-    let m = parseInt(qs.get("m"), 10);
-
-    if(!c || !Number.isFinite(m)){
-      const hash = (window.location.hash || "").replace(/^#/, "");
-      const hs = new URLSearchParams(hash);
-      c = (hs.get("c") || "").toLowerCase().trim();
-      m = parseInt(hs.get("m"), 10);
-    }
-
-    if(!c || !Number.isFinite(m) || m === 0) return;
-
-    const country = CODE_TO_COUNTRY[c];
-
-    // очищаем URL (чтобы при обновлении не прибавляло снова)
-    history.replaceState({}, "", baseUrl());
-
-    if(!country){
-      alert("Неизвестная страна в ссылке.");
-      return;
-    }
-
-    applyBoostInternal(country, m, false);
-  }
-
-  // -----------------------------
-  // Modals
+  // Menu / settings (local)
   // -----------------------------
   const menuModal = document.getElementById("menuModal");
   const settingsModal = document.getElementById("settingsModal");
@@ -1249,13 +1137,9 @@
     if(e.key === "Escape"){
       [menuModal, settingsModal].forEach(m=>m.classList.remove("open"));
       document.body.style.overflow="";
-      cancelKeyCapture();
     }
   });
 
-  // -----------------------------
-  // Menu UI
-  // -----------------------------
   const winsEditor = document.getElementById("winsEditor");
 
   function secToText(sec){
@@ -1306,7 +1190,7 @@
         const name = btn.getAttribute("data-inc");
         const st = state.countries.find(x=>x.name===name);
         st.wins += 1;
-        renderTable(); saveState(true); renderMenu();
+        renderTable(); saveState(); renderMenu();
       };
     });
     winsEditor.querySelectorAll("[data-dec]").forEach(btn=>{
@@ -1314,7 +1198,7 @@
         const name = btn.getAttribute("data-dec");
         const st = state.countries.find(x=>x.name===name);
         st.wins = Math.max(0, st.wins - 1);
-        renderTable(); saveState(true); renderMenu();
+        renderTable(); saveState(); renderMenu();
       };
     });
   }
@@ -1325,10 +1209,10 @@
   };
   document.getElementById("menuClose").onclick = ()=> closeModal(menuModal);
 
-  document.getElementById("tPlus10").onclick = ()=>{ state.timeLeft += 10; renderTimer(); saveState(true); renderMenu(); };
-  document.getElementById("tPlus60").onclick = ()=>{ state.timeLeft += 60; renderTimer(); saveState(true); renderMenu(); };
-  document.getElementById("tMinus60").onclick = ()=>{ state.timeLeft = Math.max(0, state.timeLeft - 60); renderTimer(); saveState(true); renderMenu(); };
-  document.getElementById("toggleRun").onclick = ()=>{ state.running = !state.running; saveState(true); renderMenu(); };
+  document.getElementById("tPlus10").onclick = ()=>{ state.timeLeft += 10; renderTimer(); saveState(); renderMenu(); };
+  document.getElementById("tPlus60").onclick = ()=>{ state.timeLeft += 60; renderTimer(); saveState(); renderMenu(); };
+  document.getElementById("tMinus60").onclick = ()=>{ state.timeLeft = Math.max(0, state.timeLeft - 60); renderTimer(); saveState(); renderMenu(); };
+  document.getElementById("toggleRun").onclick = ()=>{ state.running = !state.running; saveState(); renderMenu(); };
 
   document.getElementById("menuSave").onclick = ()=>{
     const t = textToSec(document.getElementById("menuTimer").value);
@@ -1353,22 +1237,27 @@
     saveCfg();
 
     renderAll();
-    saveState(true);
+    saveState();
     closeModal(menuModal);
   };
 
-  // -----------------------------
-  // Settings UI (rules + copy)
-  // -----------------------------
+  // Settings (rules list)
   const rulesList = document.getElementById("rulesList");
+
   function loadRules(){ return loadJSON(LS_RULES, []); }
   function saveRules(r){ saveJSON(LS_RULES, r); }
 
-  // Ссылка через # (для Stream2earn)
+  function baseUrl(){
+    const u = new URL(window.location.href);
+    u.search = ""; u.hash = "";
+    return u.toString();
+  }
+
   function makeBoostUrl(countryName, add){
+    const P = getParamsBoth();
     const code = NAME_TO_CODE[countryName];
     const u = new URL(baseUrl());
-    u.hash = `c=${encodeURIComponent(code)}&m=${encodeURIComponent(String(add))}`;
+    u.hash = `mode=push&sid=${encodeURIComponent(P.sid)}&c=${encodeURIComponent(code)}&m=${encodeURIComponent(String(add))}`;
     return u.toString();
   }
 
@@ -1421,12 +1310,8 @@
   document.getElementById("btnSettings").onclick = ()=>{
     openModal(settingsModal);
     renderRules();
-    renderBinds();
   };
-  document.getElementById("settingsClose").onclick = ()=>{
-    closeModal(settingsModal);
-    cancelKeyCapture();
-  };
+  document.getElementById("settingsClose").onclick = ()=> closeModal(settingsModal);
 
   document.getElementById("createRule").onclick = ()=>{
     const country = document.getElementById("country").value;
@@ -1439,126 +1324,7 @@
     renderRules();
   };
 
-  // -----------------------------
-  // Keybinds
-  // -----------------------------
-  const bindsListEl = document.getElementById("bindsList");
-  const bindKeyCodeEl = document.getElementById("bindKeyCode");
-  let capturingKey = false;
-
-  function loadBinds(){ return loadJSON(LS_BINDS, []); }
-  function saveBinds(b){ saveJSON(LS_BINDS, b); }
-
-  function renderBinds(){
-    const binds = loadBinds();
-    bindsListEl.innerHTML = "";
-    if(binds.length === 0){
-      bindsListEl.innerHTML = `<div style="color:var(--muted);font-weight:900;">Биндов пока нет.</div>`;
-      return;
-    }
-
-    binds.forEach(b=>{
-      const row = document.createElement("div");
-      row.className = "adminRow";
-      row.style.gridTemplateColumns = "1fr 120px 120px 1fr";
-      row.innerHTML = `
-        <div><b>${b.country}</b></div>
-        <div>+<b>${b.add}</b> M</div>
-        <div><b>${b.code}</b></div>
-        <div style="display:flex; gap:8px; justify-content:flex-end;">
-          <button class="btn small" data-test="${b.id}">ТЕСТ</button>
-          <button class="btn small" data-delbind="${b.id}">Удалить</button>
-        </div>
-      `;
-      bindsListEl.appendChild(row);
-    });
-
-    bindsListEl.querySelectorAll("[data-delbind]").forEach(btn=>{
-      btn.onclick = ()=>{
-        const id = btn.getAttribute("data-delbind");
-        saveBinds(loadBinds().filter(x=>x.id !== id));
-        renderBinds();
-      };
-    });
-
-    bindsListEl.querySelectorAll("[data-test]").forEach(btn=>{
-      btn.onclick = ()=>{
-        const id = btn.getAttribute("data-test");
-        const b = loadBinds().find(x=>x.id === id);
-        if(b) applyBoostInternal(b.country, Number(b.add)||0, false);
-      };
-    });
-  }
-
-  function makeId(){
-    return (crypto?.randomUUID ? crypto.randomUUID() : (Date.now()+"-"+Math.random()))
-      .replace(/[^a-zA-Z0-9]/g,"").slice(0,16);
-  }
-
-  function startKeyCapture(){
-    capturingKey = true;
-    bindKeyCodeEl.value = "Нажми клавишу...";
-    document.getElementById("bindPickKey").textContent = "ЖДУ...";
-  }
-  function cancelKeyCapture(){
-    capturingKey = false;
-    document.getElementById("bindPickKey").textContent = "ВЫБРАТЬ КЛАВИШУ";
-    if(bindKeyCodeEl.value === "Нажми клавишу...") bindKeyCodeEl.value = "";
-  }
-
-  document.getElementById("bindPickKey").onclick = ()=>{
-    startKeyCapture();
-  };
-
-  document.getElementById("bindCreate").onclick = ()=>{
-    const country = document.getElementById("bindCountry").value;
-    const add = parseInt(document.getElementById("bindMeters").value,10) || 0;
-    const code = String(bindKeyCodeEl.value || "").trim();
-    if(!code){ alert("Выбери клавишу"); return; }
-    if(add === 0){ alert("Введите +метры"); return; }
-
-    const binds = loadBinds();
-
-    // если такая клавиша уже была — заменим её (чтобы не было дублей)
-    const idx = binds.findIndex(x => x.code === code);
-    const item = { id: (idx>=0 ? binds[idx].id : makeId()), code, country, add };
-    if(idx>=0) binds[idx] = item; else binds.unshift(item);
-
-    saveBinds(binds);
-    renderBinds();
-    cancelKeyCapture();
-    bindKeyCodeEl.value = "";
-  };
-
-  // Глобальный обработчик клавиш
-  document.addEventListener("keydown", (e)=>{
-    // если идёт выбор клавиши — поймаем и запишем
-    if(capturingKey){
-      e.preventDefault();
-      e.stopPropagation();
-      if(e.code === "Escape"){ cancelKeyCapture(); return; }
-      bindKeyCodeEl.value = e.code;
-      cancelKeyCapture();
-      return;
-    }
-
-    // не срабатываем, когда печатаешь в инпутах
-    const t = e.target;
-    const tag = (t && t.tagName) ? t.tagName.toLowerCase() : "";
-    const isTyping = tag === "input" || tag === "textarea" || tag === "select" || (t && t.isContentEditable);
-    if(isTyping) return;
-
-    const binds = loadBinds();
-    const b = binds.find(x => x.code === e.code);
-    if(!b) return;
-
-    e.preventDefault();
-    applyBoostInternal(b.country, Number(b.add)||0, false);
-  });
-
-  // -----------------------------
   // Other buttons
-  // -----------------------------
   document.getElementById("btnSound").onclick = ()=>{
     cfg.soundEnabled = !cfg.soundEnabled;
     saveCfg();
@@ -1572,12 +1338,10 @@
     renderTimer();
     updateCars(true);
     updateLeaderHighlight();
-    saveState(true);
+    saveState();
   };
 
-  // -----------------------------
   // Render all
-  // -----------------------------
   function renderAll(){
     renderHeader();
     renderTimer();
@@ -1586,76 +1350,72 @@
     updateLeaderHighlight();
   }
 
-  // -----------------------------
   // Timer loop
-  // -----------------------------
   setInterval(()=>{
     if(!state.running) return;
     if(state.timeLeft <= 0) return;
 
     state.timeLeft--;
     renderTimer();
-    saveState(true);
+    saveState();
 
     if(state.timeLeft === 0){
       state.running = false;
-      saveState(true);
+      saveState();
       finishRace();
     }
   }, 1000);
 
   // -----------------------------
-  // Init
+  // Firebase: PUSH + LISTEN
   // -----------------------------
-  function updateCars(pop=true){ // re-declare fix if hoisting confusion
-    COUNTRIES.forEach(c=>{
-      const st = state.countries.find(x=>x.name===c.name);
-      const wrap = lanesEl.querySelector(`.carWrap[data-name="${CSS.escape(c.name)}"]`);
-      if(!wrap) return;
+  async function pushBoost(sid, c, m){
+    if(!c || !Number.isFinite(m) || m === 0) return;
 
-      const p = Math.max(0, Math.min(1, st.meters / MAX_METERS));
-      const left = 3 + p * 72;
+    await db.ref(`boosts/${sid}`).push({ c, m, t: Date.now() });
 
-      const last = wrap.__lastMeters ?? st.meters;
-      const delta = Math.abs(st.meters - last);
-
-      const dur = Math.max(260, Math.min(900, 260 + delta * 2));
-      wrap.style.transition = `left ${dur}ms cubic-bezier(.2,.9,.2,1)`;
-      wrap.style.left = left + "%";
-
-      const badge = wrap.querySelector(".badgeM");
-      badge.textContent = `${st.meters} M`;
-
-      if(pop){
-        badge.classList.remove("pop");
-        void badge.offsetWidth;
-        badge.classList.add("pop");
-      }
-
-      wrap.__lastMeters = st.meters;
-    });
+    document.body.innerHTML = `
+      <div style="height:100vh;display:flex;align-items:center;justify-content:center;background:#050515;color:#fff;font:800 28px system-ui;">
+        OK (+${m} / ${c})
+      </div>`;
   }
 
+  function listenBoosts(sid){
+    const startedAt = Date.now();
+
+    db.ref(`boosts/${sid}`)
+      .orderByChild("t")
+      .startAt(startedAt)
+      .on("child_added", (snap)=>{
+        const v = snap.val();
+        if(!v) return;
+        const country = CODE_TO_COUNTRY[(v.c || "").toLowerCase()];
+        const add = Number(v.m) || 0;
+        if(!country || add === 0) return;
+        applyBoostInternal(country, add);
+      });
+  }
+
+  // -----------------------------
+  // Init
+  // -----------------------------
   renderHeader();
   renderTimer();
   renderTable();
   renderLanes();
-  saveState(false);
+  saveState();
 
-  // применяем буст из URL (многоразовый)
-  applyBoostFromUrl();
+  const P = getParamsBoth();
 
-  // раз в 2 секунды подстрахуемся: если состояние менялось (другая вкладка) — перерисуем
-  // (обычно хватает BroadcastChannel/storage, но это 100% стабильно)
-  let lastSnapshot = "";
-  setInterval(()=>{
-    const s = localStorage.getItem(LS_STATE) || "";
-    if(s !== lastSnapshot){
-      lastSnapshot = s;
-      loadStateFromStorage();
-      renderAll();
-    }
-  }, 2000);
+  if (P.mode === "push") {
+    // режим "ссылка-триггер" для StreamToEarn
+    pushBoost(P.sid, P.c, P.m).catch(err=>{
+      document.body.innerHTML = `<pre style="color:#fff;background:#111;padding:16px;white-space:pre-wrap;">${String(err)}</pre>`;
+    });
+  } else {
+    // режим overlay: слушаем базу
+    listenBoosts(P.sid);
+  }
 </script>
 </body>
 </html>
