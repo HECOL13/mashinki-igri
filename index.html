@@ -37,7 +37,7 @@
     box-shadow: 0 0 0 2px rgba(70,60,130,.55) inset, 0 22px 70px rgba(0,0,0,.55), 0 0 46px rgba(132,110,255,.18);
     position:relative;
     overflow:hidden;
-    isolation:isolate; /* фикс слоёв */
+    isolation:isolate;
   }
 
   .board:before{
@@ -83,6 +83,14 @@
     width:18px;height:18px; border-radius:6px;
     background: linear-gradient(#ffd36b, #c28b17);
     box-shadow: 0 0 12px rgba(255,210,90,.25);
+  }
+
+  /* ИКОНКА КУБКА ДЛЯ "РЕКОРД" */
+  .trophyIcon{
+    width:22px;
+    height:22px;
+    filter: drop-shadow(0 0 12px rgba(255,210,90,.25));
+    flex:none;
   }
 
   .winner{
@@ -413,7 +421,7 @@
     align-items:center;
     justify-content:center;
     padding:20px;
-    z-index:999999; /* всегда поверх */
+    z-index:999999;
     backdrop-filter: blur(6px);
   }
   .modal.open{display:flex}
@@ -549,7 +557,11 @@
         <div class="topbar">
           <div class="pill">
             <div style="display:flex; align-items:center; gap:10px;">
-              <div class="cup" style="width:20px;height:20px;border-radius:6px"></div>
+              <!-- КУБОК вместо квадратика -->
+              <svg class="trophyIcon" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#ffcf4a" d="M19 4h-3V3H8v1H5a1 1 0 0 0-1 1v2a5 5 0 0 0 4 4.9A6.02 6.02 0 0 0 11 15.8V18H8v2h8v-2h-3v-2.2a6.02 6.02 0 0 0 3-3.9A5 5 0 0 0 20 7V5a1 1 0 0 0-1-1ZM6 7V6h2v4.8A3 3 0 0 1 6 7Zm12 0a3 3 0 0 1-2 3.8V6h2v1Z"/>
+              </svg>
+
               <div style="text-align:left;">
                 <small>РЕКОРД</small>
                 <div class="recordValue" id="record">0</div>
@@ -706,11 +718,10 @@
     </div>
 
     <div class="hint">
-      Ссылки вида: <b>?boost=TOKEN</b>. Если stream-to-earn откроет в другой вкладке — очки всё равно прилетят сюда.
+      Ссылки вида: <b>?c=ru&amp;m=5</b> (многоразовые, работают на любом устройстве — всё лежит в URL).
     </div>
 
     <div class="modalActions">
-      <button class="btn" id="wipeUsed">СБРОС “ИСПОЛЬЗОВАНО”</button>
       <button class="btn" id="settingsClose">ЗАКРЫТЬ</button>
     </div>
   </div>
@@ -739,6 +750,10 @@
     { name:"Грузия",   code:"ge", color:"#ff5bd6" },
     { name:"Казахстан",code:"kz", color:"#3bff9c" },
   ];
+
+  // Маппинги для URL-правил (чтобы ссылка работала на любом устройстве)
+  const CODE_TO_COUNTRY = Object.fromEntries(COUNTRIES.map(c => [c.code, c.name]));
+  const NAME_TO_CODE = Object.fromEntries(COUNTRIES.map(c => [c.name, c.code]));
 
   const MAX_METERS = 2000;
 
@@ -786,8 +801,7 @@
   // Storage
   // -----------------------------
   const LS_STATE = "race_state_v6";
-  const LS_RULES = "race_rules_v6";
-  const LS_USED  = "race_used_v6";
+  const LS_RULES = "race_rules_v7"; // хранение списка правил (для удобства)
   const LS_CFG   = "race_cfg_v6";
 
   function loadJSON(key, fallback){
@@ -914,7 +928,6 @@
   function renderTable(){
     const list = [...state.countries].sort((a,b)=>{
       if(b.wins !== a.wins) return b.wins - a.wins;
-      // если равны — сортируем по алфавиту, чтобы стабильно
       return a.name.localeCompare(b.name, "ru");
     });
 
@@ -935,7 +948,7 @@
   }
 
   // -----------------------------
-  // Lanes (fixed order like your design)
+  // Lanes (fixed order)
   // -----------------------------
   function crownSvg(){
     return `
@@ -982,7 +995,6 @@
       const last = wrap.__lastMeters ?? st.meters;
       const delta = Math.abs(st.meters - last);
 
-      // плавность: чем больше добавили — тем “быстрее и длиннее” движение
       const dur = Math.max(260, Math.min(900, 260 + delta * 2));
       wrap.style.transition = `left ${dur}ms cubic-bezier(.2,.9,.2,1)`;
       wrap.style.left = left + "%";
@@ -1055,7 +1067,7 @@
   }
 
   // -----------------------------
-  // Rules / boosts
+  // URL helpers
   // -----------------------------
   function baseUrl(){
     const u = new URL(window.location.href);
@@ -1063,27 +1075,16 @@
     return u.toString();
   }
 
-  function makeToken(){
-    return (crypto?.randomUUID ? crypto.randomUUID() : (Date.now()+"-"+Math.random()))
-      .replace(/[^a-zA-Z0-9]/g,"").slice(0,16);
-  }
-
   function loadRules(){ return loadJSON(LS_RULES, []); }
   function saveRules(r){ saveJSON(LS_RULES, r); }
-  function loadUsed(){ return loadJSON(LS_USED, []); }
-  function saveUsed(u){ saveJSON(LS_USED, u); }
 
-  // cross-tab sync
+  // cross-tab sync (если открыто несколько вкладок)
   const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("race_channel_v2") : null;
 
-  function applyBoostInternal(country, add, token, fromRemote=false){
-    if(token){
-      const used = loadUsed();
-      if(used.includes(token)) return false;
-      used.push(token);
-      saveUsed(used);
-    }
-
+  // -----------------------------
+  // Boost applying (МНОГОРАЗОВО)
+  // -----------------------------
+  function applyBoostInternal(country, add, fromRemote=false){
     const st = state.countries.find(x=>x.name===country);
     if(!st) return false;
 
@@ -1101,7 +1102,7 @@
     saveState();
 
     if(!fromRemote && bc){
-      bc.postMessage({type:"boost", country, add, token});
+      bc.postMessage({type:"boost", country, add});
     }
     return true;
   }
@@ -1110,28 +1111,32 @@
     bc.onmessage = (ev)=>{
       const msg = ev.data;
       if(!msg || msg.type!=="boost") return;
-      applyBoostInternal(msg.country, Number(msg.add)||0, msg.token, true);
+      applyBoostInternal(msg.country, Number(msg.add)||0, true);
     };
   }
 
-  function applyBoostTokenFromUrl(){
+  // -----------------------------
+  // Boost прямо из URL (многоразовый)
+  // Формат: ?c=ru&m=5
+  // -----------------------------
+  function applyBoostFromUrl(){
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("boost");
-    if(!token) return;
+    const c = (params.get("c") || "").toLowerCase().trim();
+    const m = parseInt(params.get("m"), 10);
 
-    const rules = loadRules();
-    const rule = rules.find(r=>r.token===token);
+    if(!c || !Number.isFinite(m) || m === 0) return;
 
-    // clean URL
+    const country = CODE_TO_COUNTRY[c];
+
+    // чистим URL, чтобы страница дальше жила без параметров
     history.replaceState({}, "", baseUrl());
 
-    if(!rule){
-      alert("Ссылка не найдена.");
+    if(!country){
+      alert("Неизвестная страна в ссылке.");
       return;
     }
 
-    const ok = applyBoostInternal(rule.country, Number(rule.add)||0, token, false);
-    if(!ok) alert("Ссылка уже использована на этом устройстве.");
+    applyBoostInternal(country, m, false);
   }
 
   // -----------------------------
@@ -1195,7 +1200,6 @@
     document.getElementById("turboThreshold").value = String(cfg.turboThreshold);
 
     winsEditor.innerHTML = "";
-    // в меню редактируем в фиксированном порядке (чтобы удобно)
     COUNTRIES.forEach(c=>{
       const st = state.countries.find(x=>x.name===c.name);
       const row = document.createElement("div");
@@ -1232,7 +1236,6 @@
     });
   }
 
-  // buttons
   document.getElementById("btnMenu").onclick = ()=>{
     openModal(menuModal);
     renderMenu();
@@ -1254,7 +1257,6 @@
 
     state.lastWinner = document.getElementById("menuWinner").value || "НЕТ";
 
-    // wins from inputs
     winsEditor.querySelectorAll("[data-win]").forEach(inp=>{
       const name = inp.getAttribute("data-win");
       const st = state.countries.find(x=>x.name===name);
@@ -1262,7 +1264,6 @@
       st.wins = Number.isFinite(v) && v >= 0 ? v : 0;
     });
 
-    // sound cfg
     cfg.soundEnabled = document.getElementById("soundEnabled").value === "1";
     cfg.volume = Math.max(0, Math.min(1, (parseInt(document.getElementById("soundVol").value,10) || 0) / 100));
     cfg.turboThreshold = Math.max(1, parseInt(document.getElementById("turboThreshold").value,10) || cfgDefault.turboThreshold);
@@ -1274,9 +1275,17 @@
   };
 
   // -----------------------------
-  // Settings UI (rules)
+  // Settings UI (rules list + copy links)
   // -----------------------------
   const rulesList = document.getElementById("rulesList");
+
+  function makeBoostUrl(countryName, add){
+    const code = NAME_TO_CODE[countryName];
+    const u = new URL(baseUrl());
+    u.searchParams.set("c", code);
+    u.searchParams.set("m", String(add));
+    return u.toString();
+  }
 
   function renderRules(){
     const rules = loadRules();
@@ -1287,7 +1296,7 @@
     }
 
     rules.forEach(r=>{
-      const url = `${baseUrl()}?boost=${encodeURIComponent(r.token)}`;
+      const url = makeBoostUrl(r.country, r.add);
       const row = document.createElement("div");
       row.className = "adminRow";
       row.style.gridTemplateColumns = "1fr 120px 1fr";
@@ -1296,7 +1305,7 @@
         <div>+<b>${r.add}</b> M</div>
         <div style="display:flex; gap:8px; justify-content:flex-end;">
           <button class="btn small" data-copy="${url}">Копировать</button>
-          <button class="btn small" data-del="${r.token}">Удалить</button>
+          <button class="btn small" data-del="${r.createdAt}">Удалить</button>
         </div>
       `;
       rulesList.appendChild(row);
@@ -1315,10 +1324,11 @@
       });
     });
 
+    // удаление по createdAt (достаточно для локального списка)
     rulesList.querySelectorAll("[data-del]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
-        const token = btn.getAttribute("data-del");
-        saveRules(loadRules().filter(x=>x.token!==token));
+        const id = Number(btn.getAttribute("data-del"));
+        saveRules(loadRules().filter(x=>x.createdAt !== id));
         renderRules();
       });
     });
@@ -1330,20 +1340,16 @@
   };
   document.getElementById("settingsClose").onclick = ()=> closeModal(settingsModal);
 
+  // Создать правило: сохраняем в список (для удобства), ссылка многоразовая
   document.getElementById("createRule").onclick = ()=>{
     const country = document.getElementById("country").value;
     const add = parseInt(document.getElementById("meters").value,10) || 0;
     if(add === 0){ alert("Введите +метры"); return; }
-    const token = makeToken();
+
     const rules = loadRules();
-    rules.unshift({ token, country, add, createdAt: Date.now() });
+    rules.unshift({ country, add, createdAt: Date.now() });
     saveRules(rules);
     renderRules();
-  };
-
-  document.getElementById("wipeUsed").onclick = ()=>{
-    localStorage.removeItem(LS_USED);
-    alert("Сброшено.");
   };
 
   // -----------------------------
@@ -1403,8 +1409,8 @@
   renderLanes();
   saveState();
 
-  // Apply boost URL in this tab
-  applyBoostTokenFromUrl();
+  // применяем буст из URL (многоразовый)
+  applyBoostFromUrl();
 </script>
 </body>
 </html>
