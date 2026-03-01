@@ -26,11 +26,20 @@
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   }
 
-  .frame{height:100vh; padding:16px; display:flex; align-items:center; justify-content:center;}
+  /* ✅ теперь страница может расти по высоте */
+  .frame{
+    min-height:100vh;
+    height:auto;
+    padding:16px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+  }
 
   .board{
     width:min(1280px, 96vw);
-    height:min(720px, 96vh);
+    height:auto;                 /* ✅ авто-высота */
+    min-height:720px;            /* ✅ как раньше минимально */
     background: linear-gradient(#09091a, #060615);
     border-radius:26px;
     border:3px solid var(--stroke);
@@ -52,7 +61,7 @@
     display:grid;
     grid-template-columns: 290px 1fr;
     gap:14px;
-    height:100%;
+    height:auto;                 /* ✅ авто-высота */
     padding:16px;
   }
 
@@ -86,7 +95,7 @@
   }
 
   .trophyIcon{
-    width:34px; /* можешь менять размер тут */
+    width:34px;
     height:34px;
     filter: drop-shadow(0 0 12px rgba(255,210,90,.25));
     flex:none;
@@ -109,8 +118,8 @@
     display:flex;
     flex-direction:column;
     gap:8px;
-    flex:1;
-    overflow:auto;
+    flex:0;              /* ✅ не заставляем фиксировать высоту */
+    overflow:visible;    /* ✅ растём вниз */
   }
 
   .thead{
@@ -195,18 +204,19 @@
 
   /* FIELD */
   .field{
-    flex:1;
     border-radius:20px;
     border:2px solid rgba(140,120,255,.35);
     background: rgba(8,8,20,.25);
     box-shadow: 0 0 0 2px rgba(20,20,50,.6) inset;
     position:relative;
-    overflow:hidden;
+    overflow:visible; /* ✅ чтобы поле могло расти вниз */
+    padding-bottom:16px;
   }
 
+  /* ✅ tracks теперь НЕ absolute — растут по контенту */
   .tracks{
-    position:absolute;
-    left:18px; right:18px; top:18px; bottom:92px;
+    position:relative;
+    margin:18px;
     border-radius:18px;
     border:2px solid rgba(140,120,255,.25);
     background: linear-gradient(180deg, rgba(35,35,60,.35), rgba(12,12,28,.35));
@@ -232,6 +242,7 @@
   .finishWrap{
     position:absolute; right:44px; top:0; bottom:0;
     width:62px; display:flex; gap:8px; pointer-events:none;
+    z-index:3;
   }
   .yellowGlow{
     width:12px;
@@ -249,12 +260,10 @@
   }
 
   .lanes{
-    position:absolute;
-    inset:0;
+    position:relative;
     padding:22px 26px;
     display:flex;
     flex-direction:column;
-    justify-content:space-between;
     gap:18px;
     z-index:2;
   }
@@ -378,14 +387,19 @@
 
   /* Bottom buttons */
   .bottomBar{
-    position:absolute;
-    left:18px; right:18px; bottom:16px;
+    margin:0 18px 16px 18px;
     height:64px;
     display:flex;
     justify-content:space-between;
     align-items:center;
     padding:0 18px;
     gap:14px;
+    border-radius:16px;
+    position:sticky; /* ✅ красиво при скролле */
+    bottom:16px;
+    background: rgba(6,6,22,.55);
+    backdrop-filter: blur(6px);
+    border:2px solid rgba(140,120,255,.22);
   }
   .btnRow{display:flex; gap:12px; align-items:center}
   .btn{
@@ -517,6 +531,11 @@
     85%  {opacity:1; transform:scale(1) translateY(0);}
     100% {opacity:0; transform:scale(.98) translateY(6px);}
   }
+
+  /* адаптация под узкие экраны */
+  @media (max-width: 980px){
+    .layout{grid-template-columns:1fr}
+  }
 </style>
 </head>
 
@@ -576,7 +595,7 @@
         </div>
 
         <section class="field">
-          <div class="tracks">
+          <div class="tracks" id="tracks">
             <div class="finishWrap"><div class="yellowGlow"></div><div class="finish"></div></div>
             <div class="lanes" id="lanes"></div>
           </div>
@@ -702,7 +721,7 @@
       <div style="color:var(--muted); font-weight:1000; font-size:12px; margin-bottom:8px;">Список правил URL</div>
       <div id="rulesList"></div>
       <div class="hint">
-        Ссылки делаем через <b>#</b>: <b>#c=ru&amp;m=5</b> — это чаще работает в “вставках ссылок” у сторонних программ.
+        Ссылки идут через <b>#</b>: <b>#c=ru&amp;m=5</b> — чаще работает в сторонних программах.
       </div>
     </div>
 
@@ -756,13 +775,12 @@
       </div>
 
       <div class="hint" style="margin-top:10px;">
-        Иконка берётся с <b>flagcdn.com</b> по ISO-коду (2 буквы): <b>ru, us, jp, fr</b> и т.д.
-        Если код неправильный — флаг не загрузится.
+        Иконка берётся с <b>flagcdn.com</b> по ISO-коду (2 буквы): <b>ru, us, jp, fr</b>.
       </div>
 
       <div class="grid2" style="grid-template-columns: 1fr 1fr 160px; margin-top:10px;">
         <div>
-          <div class="lbl">Название (как будет в списке)</div>
+          <div class="lbl">Название</div>
           <input class="inp" id="newCountryName" placeholder="Например: Япония" />
         </div>
         <div>
@@ -808,8 +826,8 @@
   // =============================
   // Storage keys
   // =============================
-  const LS_STATE     = "race_state_v8";
-  const LS_RULES     = "race_rules_v8";
+  const LS_STATE     = "race_state_v9";
+  const LS_RULES     = "race_rules_v9";
   const LS_CFG       = "race_cfg_v6";
   const LS_BINDS     = "race_binds_v1";
   const LS_COUNTRIES = "race_countries_v1";
@@ -849,7 +867,6 @@
   function loadCountries(){
     const saved = loadJSON(LS_COUNTRIES, null);
     if(!Array.isArray(saved) || saved.length === 0) return DEFAULT_COUNTRIES.slice();
-    // минимальная валидация
     return saved
       .map(c=>({ name: normalizeName(c.name), code: normalizeCode(c.code), color: c.color || "" }))
       .filter(c=>c.name && c.code);
@@ -873,7 +890,6 @@
   }
   rebuildMaps();
 
-  const MAX_METERS = 2000;
   const flagUrl = (code)=>`https://flagcdn.com/w40/${code}.png`;
 
   // =============================
@@ -963,7 +979,7 @@
   // =============================
   // Cross-tab auto-update
   // =============================
-  const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("race_channel_v5") : null;
+  const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("race_channel_v6") : null;
 
   function broadcastState(){
     if(!bc) return;
@@ -1033,17 +1049,15 @@
   };
 
   function ensureStateCountries(){
-    // добавить новые страны в state
     const existing = new Set(state.countries.map(x=>x.name));
     COUNTRIES.forEach(c=>{
       if(!existing.has(c.name)){
         state.countries.push({ name:c.name, meters:0, wins:0 });
       }
     });
-    // убрать те, которых больше нет (если удалили)
     const allowed = new Set(COUNTRIES.map(c=>c.name));
     state.countries = state.countries.filter(x=>allowed.has(x.name));
-    // если recordCountry исчез — сбросим
+
     if(state.recordCountry !== "НЕТ" && !allowed.has(state.recordCountry)) state.recordCountry = "НЕТ";
     if(state.lastWinner !== "НЕТ" && !allowed.has(state.lastWinner)) state.lastWinner = "НЕТ";
     saveState(false);
@@ -1085,7 +1099,6 @@
 
   (function initState(){
     loadStateFromStorage();
-    // компенсация времени
     if(state.running){
       const elapsed = Math.floor((Date.now() - state.savedAt)/1000);
       state.timeLeft = Math.max(0, state.timeLeft - elapsed);
@@ -1113,13 +1126,11 @@
 
   const miniFlagsEl = document.getElementById("miniFlags");
 
-  // settings selects
   const selCountryRule = document.getElementById("country");
   const selBindCountry = document.getElementById("bindCountry");
   const selMenuWinner = document.getElementById("menuWinner");
   const selMenuRecordCountry = document.getElementById("menuRecordCountry");
 
-  // countries manager
   const countrySearchEl = document.getElementById("countrySearch");
   const countryResultsEl = document.getElementById("countryResults");
   const newCountryNameEl = document.getElementById("newCountryName");
@@ -1167,6 +1178,34 @@
   }
 
   // =============================
+  // ✅ УМНОЕ ПРЕОБРАЗОВАНИЕ ОЧКОВ В ПОЗИЦИЮ (главная правка)
+  // =============================
+  function metersToProgress01(meters){
+    const vals = state.countries.map(x=>x.meters);
+    const max = Math.max(...vals);
+    const min = Math.min(...vals);
+
+    if(!Number.isFinite(max) || max === min) return 0.50;
+
+    const range = max - min;
+    const rel = max > 0 ? (range / max) : 0;
+
+    // если все близко (разница <= 25% от лидера) — держим в середине
+    const isClosePack = rel <= 0.25;
+
+    // нормализация 0..1 внутри текущего диапазона
+    const t = (meters - min) / range;
+
+    if(isClosePack){
+      // середина: 0.35..0.65
+      return 0.35 + t * 0.30;
+    }else{
+      // полный диапазон: 0.08..0.92 (никто не утыкается в финиш мгновенно)
+      return 0.08 + t * 0.84;
+    }
+  }
+
+  // =============================
   // Lanes
   // =============================
   function crownSvg(){
@@ -1182,7 +1221,7 @@
       const lane = document.createElement("div");
       lane.className = "lane";
       lane.setAttribute("data-name", c.name);
-      lane.style.color = (c.color || "#8c78ff"); // ✅ цвет подсветки на лету
+      lane.style.color = (c.color || "#8c78ff");
 
       const st = state.countries.find(x=>x.name===c.name) || {meters:0};
       lane.innerHTML = `
@@ -1210,8 +1249,9 @@
       const wrap = lanesEl.querySelector(`.carWrap[data-name="${CSS.escape(c.name)}"]`);
       if(!wrap || !st) return;
 
-      const p = Math.max(0, Math.min(1, st.meters / MAX_METERS));
-      const left = 3 + p * 72;
+      // ✅ вместо MAX_METERS теперь умная шкала
+      const p01 = metersToProgress01(st.meters);      // 0..1
+      const left = 3 + p01 * 72;                      // 3%..75% как в дизайне
 
       const last = wrap.__lastMeters ?? st.meters;
       const delta = Math.abs(st.meters - last);
@@ -1228,7 +1268,6 @@
         void badge.offsetWidth;
         badge.classList.add("pop");
       }
-
       wrap.__lastMeters = st.meters;
     });
   }
@@ -1261,7 +1300,6 @@
     const mm = String(Math.floor(state.timeLeft/60)).padStart(2,"0");
     const ss = String(state.timeLeft%60).padStart(2,"0");
     timerEl.textContent = `${mm}:${ss}`;
-
     const isX2 = (state.timeLeft > 0 && state.timeLeft <= 60);
     x2hintEl.style.display = isX2 ? "block" : "none";
   }
@@ -1299,7 +1337,7 @@
   }
 
   // =============================
-  // URL helpers + rules
+  // URL rules
   // =============================
   function baseUrl(){
     const u = new URL(window.location.href);
@@ -1318,7 +1356,7 @@
   }
 
   // =============================
-  // Boost apply (многоразово) + x2 в последнюю минуту
+  // Boost apply (многоразово) + x2 последняя минута
   // =============================
   function applyBoostInternal(country, add, fromRemote=false){
     const st = state.countries.find(x=>x.name===country);
@@ -1366,14 +1404,12 @@
     if(!c || !Number.isFinite(m) || m === 0) return;
 
     const country = window.CODE_TO_COUNTRY[c];
-
     history.replaceState({}, "", baseUrl());
 
     if(!country){
       alert("Неизвестная страна в ссылке (код).");
       return;
     }
-
     applyBoostInternal(country, m, false);
   }
 
@@ -1600,12 +1636,13 @@
   // =============================
   // Keybinds
   // =============================
+  const LS_BINDS_LOCAL = LS_BINDS;
   const bindsListEl = document.getElementById("bindsList");
   const bindKeyCodeEl = document.getElementById("bindKeyCode");
   let capturingKey = false;
 
-  function loadBinds(){ return loadJSON(LS_BINDS, []); }
-  function saveBinds(b){ saveJSON(LS_BINDS, b); }
+  function loadBinds(){ return loadJSON(LS_BINDS_LOCAL, []); }
+  function saveBinds(b){ saveJSON(LS_BINDS_LOCAL, b); }
 
   function renderBinds(){
     const binds = loadBinds();
@@ -1712,13 +1749,9 @@
   // Countries manager UI
   // =============================
   function refreshAllCountryUI(){
-    // селекты
     fillSelectWithCountries(selCountryRule, false);
     fillSelectWithCountries(selBindCountry, false);
-    // меню-селекты обновляем при открытии меню (renderMenu), но можно и тут
-    // список стран
     renderCountriesList();
-    // поиск
     renderCountrySearch(countrySearchEl.value || "");
   }
 
@@ -1801,7 +1834,6 @@
     countriesListEl.querySelectorAll("[data-delcountry]").forEach(btn=>{
       btn.onclick = ()=>{
         const name = btn.getAttribute("data-delcountry");
-        // защита: не удаляем последнюю страну
         if(COUNTRIES.length <= 1){ alert("Нельзя удалить последнюю страну."); return; }
 
         COUNTRIES = COUNTRIES.filter(c=>c.name!==name);
@@ -1828,7 +1860,6 @@
     if(!name){ alert("Введите название страны"); return; }
     if(code.length !== 2){ alert("ISO-код должен быть 2 буквы (ru, us, jp)"); return; }
 
-    // запрет дубликатов по имени/коду
     if(COUNTRIES.some(c=>c.name.toLowerCase() === name.toLowerCase())){
       alert("Такая страна уже есть (по названию).");
       return;
@@ -1858,7 +1889,7 @@
   };
 
   // =============================
-  // Open settings
+  // Settings open
   // =============================
   document.getElementById("btnSettings").onclick = ()=>{
     openModal(settingsModal);
