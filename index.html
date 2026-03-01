@@ -718,7 +718,8 @@
     </div>
 
     <div class="hint">
-      Ссылки вида: <b>?c=ru&amp;m=5</b> (многоразовые, работают на любом устройстве — всё лежит в URL).
+      Ссылки вида: <b>#c=ru&amp;m=5</b> (обычно не режутся программами).
+      Работают и так: <b>?c=ru&amp;m=5</b>.
     </div>
 
     <div class="modalActions">
@@ -751,7 +752,6 @@
     { name:"Казахстан",code:"kz", color:"#3bff9c" },
   ];
 
-  // Маппинги для URL-правил (чтобы ссылка работала на любом устройстве)
   const CODE_TO_COUNTRY = Object.fromEntries(COUNTRIES.map(c => [c.code, c.name]));
   const NAME_TO_CODE = Object.fromEntries(COUNTRIES.map(c => [c.name, c.code]));
 
@@ -762,7 +762,6 @@
   // -----------------------------
   const flagUrl = (code)=>`https://flagcdn.com/w40/${code}.png`;
 
-  // mini flags
   const miniFlags = document.getElementById("miniFlags");
   COUNTRIES.forEach(c=>{
     const img = document.createElement("img");
@@ -773,7 +772,7 @@
   });
 
   // -----------------------------
-  // SVG cars (embedded, always visible)
+  // SVG cars
   // -----------------------------
   function carSVG(color){
     const svg =
@@ -801,7 +800,7 @@
   // Storage
   // -----------------------------
   const LS_STATE = "race_state_v6";
-  const LS_RULES = "race_rules_v7"; // хранение списка правил (для удобства)
+  const LS_RULES = "race_rules_v7";
   const LS_CFG   = "race_cfg_v6";
 
   function loadJSON(key, fallback){
@@ -819,14 +818,14 @@
   // -----------------------------
   const cfgDefault = {
     soundEnabled: true,
-    volume: 0.6,          // 0..1
-    turboThreshold: 50,   // >= this meters => turbo sound + effect
+    volume: 0.6,
+    turboThreshold: 50,
   };
   let cfg = { ...cfgDefault, ...loadJSON(LS_CFG, {}) };
   function saveCfg(){ saveJSON(LS_CFG, cfg); }
 
   // -----------------------------
-  // Audio (synth only)
+  // Audio
   // -----------------------------
   class AudioMgr{
     constructor(){ this.ctx = null; }
@@ -900,7 +899,6 @@
     state.running = !!saved.running;
     state.savedAt = +saved.savedAt || Date.now();
 
-    // компенсация времени
     if(state.running){
       const elapsed = Math.floor((Date.now() - state.savedAt)/1000);
       state.timeLeft = Math.max(0, state.timeLeft - elapsed);
@@ -923,7 +921,7 @@
   const timerEl = document.getElementById("timer");
 
   // -----------------------------
-  // Table: auto sort by wins (desc)
+  // Table
   // -----------------------------
   function renderTable(){
     const list = [...state.countries].sort((a,b)=>{
@@ -948,7 +946,7 @@
   }
 
   // -----------------------------
-  // Lanes (fixed order)
+  // Lanes
   // -----------------------------
   function crownSvg(){
     return `
@@ -1082,7 +1080,7 @@
   const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("race_channel_v2") : null;
 
   // -----------------------------
-  // Boost applying (МНОГОРАЗОВО)
+  // Boost applying (многоразово)
   // -----------------------------
   function applyBoostInternal(country, add, fromRemote=false){
     const st = state.countries.find(x=>x.name===country);
@@ -1116,19 +1114,30 @@
   }
 
   // -----------------------------
-  // Boost прямо из URL (многоразовый)
-  // Формат: ?c=ru&m=5
+  // Boost from URL: поддержка ? и # (для программ, которые режут ?)
+  // Форматы:
+  //   ?c=ru&m=5
+  //   #c=ru&m=5
   // -----------------------------
   function applyBoostFromUrl(){
-    const params = new URLSearchParams(window.location.search);
-    const c = (params.get("c") || "").toLowerCase().trim();
-    const m = parseInt(params.get("m"), 10);
+    // 1) пробуем из query
+    const qs = new URLSearchParams(window.location.search);
+    let c = (qs.get("c") || "").toLowerCase().trim();
+    let m = parseInt(qs.get("m"), 10);
+
+    // 2) если нет — пробуем из hash
+    if(!c || !Number.isFinite(m)){
+      const hash = (window.location.hash || "").replace(/^#/, "");
+      const hs = new URLSearchParams(hash);
+      c = (hs.get("c") || "").toLowerCase().trim();
+      m = parseInt(hs.get("m"), 10);
+    }
 
     if(!c || !Number.isFinite(m) || m === 0) return;
 
     const country = CODE_TO_COUNTRY[c];
 
-    // чистим URL, чтобы страница дальше жила без параметров
+    // чистим URL, чтобы не применялось повторно при обновлении
     history.replaceState({}, "", baseUrl());
 
     if(!country){
@@ -1140,7 +1149,7 @@
   }
 
   // -----------------------------
-  // Modals (menu/settings)
+  // Modals
   // -----------------------------
   const menuModal = document.getElementById("menuModal");
   const settingsModal = document.getElementById("settingsModal");
@@ -1155,14 +1164,12 @@
     document.body.style.overflow="";
   }
 
-  // backdrop click
   [menuModal, settingsModal].forEach(modal=>{
     modal.addEventListener("click", (e)=>{
       if(e.target === modal) closeModal(modal);
     });
   });
 
-  // Esc
   document.addEventListener("keydown", (e)=>{
     if(e.key === "Escape"){
       [menuModal, settingsModal].forEach(m=>m.classList.remove("open"));
@@ -1275,15 +1282,15 @@
   };
 
   // -----------------------------
-  // Settings UI (rules list + copy links)
+  // Settings UI (rules + copy)
   // -----------------------------
   const rulesList = document.getElementById("rulesList");
 
+  // Делаем ссылку через # (чаще выживает в приложениях), но сайт принимает и ? тоже
   function makeBoostUrl(countryName, add){
     const code = NAME_TO_CODE[countryName];
     const u = new URL(baseUrl());
-    u.searchParams.set("c", code);
-    u.searchParams.set("m", String(add));
+    u.hash = `c=${encodeURIComponent(code)}&m=${encodeURIComponent(String(add))}`;
     return u.toString();
   }
 
@@ -1324,7 +1331,6 @@
       });
     });
 
-    // удаление по createdAt (достаточно для локального списка)
     rulesList.querySelectorAll("[data-del]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         const id = Number(btn.getAttribute("data-del"));
@@ -1340,7 +1346,6 @@
   };
   document.getElementById("settingsClose").onclick = ()=> closeModal(settingsModal);
 
-  // Создать правило: сохраняем в список (для удобства), ссылка многоразовая
   document.getElementById("createRule").onclick = ()=>{
     const country = document.getElementById("country").value;
     const add = parseInt(document.getElementById("meters").value,10) || 0;
@@ -1409,7 +1414,6 @@
   renderLanes();
   saveState();
 
-  // применяем буст из URL (многоразовый)
   applyBoostFromUrl();
 </script>
 </body>
