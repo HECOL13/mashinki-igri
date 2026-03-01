@@ -85,7 +85,7 @@
     box-shadow: 0 0 12px rgba(255,210,90,.25);
   }
 
-  /* ИКОНКА КУБКА ДЛЯ "РЕКОРД" */
+  /* КУБОК ДЛЯ "РЕКОРД" */
   .trophyIcon{
     width:22px;
     height:22px;
@@ -276,7 +276,6 @@
     box-shadow: 0 0 0 2px rgba(255,210,90,.18) inset, 0 0 24px rgba(255,210,90,.18);
   }
 
-  /* цвет подсветки по стране */
   .lane[data-name="Беларусь"]{color:#ff3b3b}
   .lane[data-name="Россия"]{color:#3b82ff}
   .lane[data-name="Украина"]{color:#ffd83b}
@@ -373,7 +372,6 @@
     box-shadow: 0 0 0 1px rgba(0,0,0,.35) inset;
   }
 
-  /* Crown */
   .crown{
     position:absolute;
     left:34px;
@@ -557,11 +555,9 @@
         <div class="topbar">
           <div class="pill">
             <div style="display:flex; align-items:center; gap:10px;">
-              <!-- КУБОК вместо квадратика -->
               <svg class="trophyIcon" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#ffcf4a" d="M19 4h-3V3H8v1H5a1 1 0 0 0-1 1v2a5 5 0 0 0 4 4.9A6.02 6.02 0 0 0 11 15.8V18H8v2h8v-2h-3v-2.2a6.02 6.02 0 0 0 3-3.9A5 5 0 0 0 20 7V5a1 1 0 0 0-1-1ZM6 7V6h2v4.8A3 3 0 0 1 6 7Zm12 0a3 3 0 0 1-2 3.8V6h2v1Z"/>
               </svg>
-
               <div style="text-align:left;">
                 <small>РЕКОРД</small>
                 <div class="recordValue" id="record">0</div>
@@ -718,8 +714,9 @@
     </div>
 
     <div class="hint">
-      Ссылки вида: <b>#c=ru&amp;m=5</b> (обычно не режутся программами).
-      Работают и так: <b>?c=ru&amp;m=5</b>.
+      Для Stream2earn ставь ссылку с <b>#</b> (обычно программы не режут это):
+      <b>#c=ru&amp;m=5</b>. Сайт также понимает <b>?c=ru&amp;m=5</b>.
+      Главное: Stream2earn должен ОТКРЫВАТЬ URL (GET), не POST.
     </div>
 
     <div class="modalActions">
@@ -793,7 +790,6 @@
 </svg>`;
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   }
-
   const CAR_SRC = Object.fromEntries(COUNTRIES.map(c=>[c.name, carSVG(c.color)]));
 
   // -----------------------------
@@ -809,18 +805,12 @@
       return v ? JSON.parse(v) : fallback;
     }catch{ return fallback; }
   }
-  function saveJSON(key, value){
-    localStorage.setItem(key, JSON.stringify(value));
-  }
+  function saveJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
 
   // -----------------------------
   // Config
   // -----------------------------
-  const cfgDefault = {
-    soundEnabled: true,
-    volume: 0.6,
-    turboThreshold: 50,
-  };
+  const cfgDefault = { soundEnabled:true, volume:0.6, turboThreshold:50 };
   let cfg = { ...cfgDefault, ...loadJSON(LS_CFG, {}) };
   function saveCfg(){ saveJSON(LS_CFG, cfg); }
 
@@ -906,10 +896,7 @@
     }
   }
 
-  function saveState(){
-    state.savedAt = Date.now();
-    saveJSON(LS_STATE, state);
-  }
+  function saveState(){ state.savedAt = Date.now(); saveJSON(LS_STATE, state); }
 
   // -----------------------------
   // UI refs
@@ -1073,16 +1060,10 @@
     return u.toString();
   }
 
-  function loadRules(){ return loadJSON(LS_RULES, []); }
-  function saveRules(r){ saveJSON(LS_RULES, r); }
-
-  // cross-tab sync (если открыто несколько вкладок)
-  const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("race_channel_v2") : null;
-
   // -----------------------------
   // Boost applying (многоразово)
   // -----------------------------
-  function applyBoostInternal(country, add, fromRemote=false){
+  function applyBoostInternal(country, add){
     const st = state.countries.find(x=>x.name===country);
     if(!st) return false;
 
@@ -1098,34 +1079,20 @@
     renderTable();
     renderHeader();
     saveState();
-
-    if(!fromRemote && bc){
-      bc.postMessage({type:"boost", country, add});
-    }
     return true;
-  }
-
-  if(bc){
-    bc.onmessage = (ev)=>{
-      const msg = ev.data;
-      if(!msg || msg.type!=="boost") return;
-      applyBoostInternal(msg.country, Number(msg.add)||0, true);
-    };
   }
 
   // -----------------------------
   // Boost from URL: поддержка ? и # (для программ, которые режут ?)
   // Форматы:
   //   ?c=ru&m=5
-  //   #c=ru&m=5
+  //   #c=ru&m=5   ← для Stream2earn лучше так
   // -----------------------------
   function applyBoostFromUrl(){
-    // 1) пробуем из query
     const qs = new URLSearchParams(window.location.search);
     let c = (qs.get("c") || "").toLowerCase().trim();
     let m = parseInt(qs.get("m"), 10);
 
-    // 2) если нет — пробуем из hash
     if(!c || !Number.isFinite(m)){
       const hash = (window.location.hash || "").replace(/^#/, "");
       const hs = new URLSearchParams(hash);
@@ -1137,7 +1104,7 @@
 
     const country = CODE_TO_COUNTRY[c];
 
-    // чистим URL, чтобы не применялось повторно при обновлении
+    // очищаем URL, чтобы при обновлении не прибавляло снова
     history.replaceState({}, "", baseUrl());
 
     if(!country){
@@ -1145,7 +1112,7 @@
       return;
     }
 
-    applyBoostInternal(country, m, false);
+    applyBoostInternal(country, m);
   }
 
   // -----------------------------
@@ -1286,7 +1253,10 @@
   // -----------------------------
   const rulesList = document.getElementById("rulesList");
 
-  // Делаем ссылку через # (чаще выживает в приложениях), но сайт принимает и ? тоже
+  function loadRules(){ return loadJSON(LS_RULES, []); }
+  function saveRules(r){ saveJSON(LS_RULES, r); }
+
+  // ВАЖНО: ссылка через # (чтобы Stream2earn не режет ? и не пытается POST)
   function makeBoostUrl(countryName, add){
     const code = NAME_TO_CODE[countryName];
     const u = new URL(baseUrl());
@@ -1414,6 +1384,7 @@
   renderLanes();
   saveState();
 
+  // применяем буст из URL (многоразовый)
   applyBoostFromUrl();
 </script>
 </body>
