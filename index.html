@@ -7,6 +7,7 @@
 
 <style>
   :root{
+    /* base */
     --bg:#050512;
     --panel:#0b0b22;
     --panel2:#07071a;
@@ -17,6 +18,89 @@
     --orange:#ff8a2a;
     --gold:#ffcf4a;
     --gridLine:rgba(255,255,255,.08);
+
+    /* ============================
+       ✅ CUSTOMIZER (persisted)
+       ============================ */
+
+    /* GLOBAL */
+    --gScale: 1;
+    --gText: #e9e9ff;
+    --gGlowOn: 1; /* 1/0 */
+    --gGlow: 0 0 12px rgba(140,120,255,.22);
+
+    /* LEFT: Tournament table */
+    --ttScale: 1.12;
+    --ttRowPadY: 12px;
+    --ttFlag: 50px;
+    --ttBadge: 34px;
+    --ttWinsFont: 20px;
+    --ttWinsW: 58px;
+    --ttRankFont: 13px;
+    --ttText: #e9e9ff;
+    --ttGlowOn: 1;
+    --ttGlow: 0 0 14px rgba(140,120,255,.18);
+
+    /* LEFT: Past winner */
+    --pwScale: 1.0;
+    --pwText: #e9e9ff;
+    --pwGlowOn: 1;
+    --pwGlow: 0 0 14px rgba(255,210,90,.12);
+
+    /* TOP: Record */
+    --recScale: 1.0;
+    --recLabelFont: 13px;
+    --recValueFont: 28px;
+    --recText: #ff8a2a;
+    --recGlowOn: 1;
+    --recGlow: 0 0 12px rgba(255,140,40,.28), 0 0 22px rgba(255,210,90,.10);
+
+    /* TOP: Timer */
+    --timScale: 1.0;
+    --timLabelFont: 13px;
+    --timValueFont: 44px;
+    --timText: #ff8a2a;
+    --timGlowOn: 1;
+    --timGlow: 0 0 12px rgba(255,140,40,.28), 0 0 22px rgba(255,140,40,.14);
+
+    /* x2 pill */
+    --x2Show: 1; /* 1/0 */
+    --x2Bg: #ff8a2a;
+    --x2Text: #ffffff;
+    --x2Font: 14px;
+    --x2PadY: 8px;
+    --x2PadX: 12px;
+
+    /* TOP: Roulette */
+    --roulScale: 1.0;
+    --roulFlag: 30px;
+    --roulText: #e9e9ff;
+    --roulGlowOn: 0;
+    --roulGlow: 0 0 14px rgba(140,120,255,.18);
+
+    /* TRACK */
+    --trkScale: 1.0;
+    --laneH: 92px;
+    --carW: 120px;
+    --afterFlag: 64px;
+    --finishW: 86px;
+
+    /* road animation speed (px/s via background-position) */
+    --roadSpeed: 110; /* number */
+
+    /* ✅ FINISH (CUSTOM) */
+    --finishShow: 1;       /* 1/0 */
+    --finishRight: 34px;   /* px */
+    --finishTop: 0px;      /* px */
+    --finishZ: 3;          /* z-index */
+    --finishStripe: rgba(255,60,60,.9);
+    --finishTextColor: #ffffff;
+    --finishBg1: rgba(0,0,0,.92);
+    --finishBg2: rgba(0,0,0,.75);
+
+    /* stop before finish (percent points of track travel) */
+    --finishStopEnabled: 0; /* 1/0 */
+    --finishStopGap: 6;     /* number: percent points (0..25) */
   }
 
   *{box-sizing:border-box}
@@ -35,6 +119,8 @@
     display:flex;
     align-items:flex-start;
     justify-content:center;
+    transform: scale(var(--gScale));
+    transform-origin: top center;
   }
 
   .board{
@@ -49,7 +135,6 @@
     overflow:hidden;
     isolation:isolate;
   }
-
   .board:before{
     content:"";
     position:absolute; inset:10px;
@@ -60,7 +145,7 @@
 
   .layout{
     display:grid;
-    grid-template-columns: 290px 1fr;
+    grid-template-columns: 320px 1fr;
     gap:14px;
     height:auto;
     padding:16px;
@@ -87,6 +172,8 @@
     background: rgba(10,10,25,.55);
     font-weight:900;
     letter-spacing:.5px;
+    color: var(--gText);
+    text-shadow: calc(var(--gGlowOn) * 1px) 0 0 rgba(0,0,0,0); /* harmless */
   }
 
   .cup{
@@ -96,15 +183,24 @@
   }
 
   .winner{
+    transform: scale(var(--pwScale));
+    transform-origin: top left;
     padding:12px;
     border-radius:16px;
     border:2px solid rgba(255,210,90,.45);
     background: linear-gradient(180deg, rgba(30,25,10,.35), rgba(10,10,25,.45));
   }
   .winner .label{color:var(--muted); font-weight:1000; font-size:12px; letter-spacing:.6px;}
-  .winner .name{font-size:18px; font-weight:1000; margin-top:4px}
+  .winner .name{
+    font-size:18px; font-weight:1000; margin-top:4px;
+    color: var(--pwText);
+    text-shadow: var(--pwGlowOn) 0 0 0 rgba(0,0,0,0);
+  }
+  .winner[data-glow="1"] .name{ text-shadow: var(--pwGlow); }
 
   .table{
+    transform: scale(var(--ttScale));
+    transform-origin: top left;
     border-radius:16px;
     border:2px solid rgba(140,120,255,.35);
     background: rgba(10,10,25,.35);
@@ -118,7 +214,7 @@
 
   .thead{
     display:grid;
-    grid-template-columns: 1fr 70px;
+    grid-template-columns: 1fr 80px;
     padding:8px 10px;
     color:var(--muted);
     font-size:12px;
@@ -129,9 +225,9 @@
   /* rows */
   .row{
     display:grid;
-    grid-template-columns: 1fr 70px;
+    grid-template-columns: 1fr 80px;
     align-items:center;
-    padding:10px 10px;
+    padding: var(--ttRowPadY) 10px;
     border-radius:14px;
     background: linear-gradient(180deg, rgba(30,30,55,.55), rgba(18,18,35,.55));
     border:1px solid rgba(140,120,255,.25);
@@ -152,17 +248,20 @@
   }
 
   .country{
-    display:flex; align-items:center; gap:10px;
+    display:flex; align-items:center; gap:12px;
     font-weight:1000;
     min-width:0;
+    color: var(--ttText);
   }
+  .table[data-glow="1"] .country{ text-shadow: var(--ttGlow); }
 
   .rankBadge{
-    width:28px; height:28px;
-    border-radius:10px;
+    width: var(--ttBadge);
+    height: var(--ttBadge);
+    border-radius:12px;
     display:grid; place-items:center;
     font-weight:1000;
-    font-size:12px;
+    font-size: var(--ttRankFont);
     background: rgba(0,0,0,.45);
     border:2px solid rgba(255,255,255,.12);
     box-shadow: 0 8px 18px rgba(0,0,0,.35);
@@ -182,18 +281,26 @@
   }
   .flagImg.big{ width:42px; height:42px; }
 
+  .table .flagImg.big{
+    width: var(--ttFlag);
+    height: var(--ttFlag);
+    border-radius: 50%;
+  }
+
   .wins{
     justify-self:end;
     font-weight:1000;
-    font-size:16px;
-    width:44px;
+    font-size: var(--ttWinsFont);
+    width: var(--ttWinsW);
     text-align:center;
-    padding:6px 0;
+    padding:8px 0;
     border-radius:12px;
     border:2px solid rgba(255,140,40,.55);
     background: rgba(10,10,20,.55);
     box-shadow: 0 0 18px rgba(255,140,40,.12);
+    color: var(--ttText);
   }
+  .table[data-glow="1"] .wins{ text-shadow: var(--ttGlow); }
 
   /* RIGHT */
   .right{display:flex; flex-direction:column; gap:12px;}
@@ -221,48 +328,58 @@
     text-transform:uppercase; margin-bottom:4px; text-align:center;
   }
 
-  /* Trophy + Record styles (neon) */
+  /* Trophy + Record */
   .trophyIcon{
-    width:34px;
-    height:34px;
-    filter:
-      drop-shadow(0 0 10px rgba(255,210,90,.35))
-      drop-shadow(0 0 18px rgba(255,140,40,.14));
+    width:34px;height:34px;
+    filter: drop-shadow(0 0 10px rgba(255,210,90,.35)) drop-shadow(0 0 18px rgba(255,140,40,.14));
     flex:none;
   }
-
+  .recordBox{
+    transform: scale(var(--recScale));
+    transform-origin: center;
+  }
+  .recordBox small{ font-size: var(--recLabelFont) !important; }
   .recordValue{
     font-weight:1000;
-    color: var(--orange);
-    font-size:26px;
+    color: var(--recText);
+    font-size: var(--recValueFont);
     letter-spacing:1px;
-    text-shadow:
-      0 0 12px rgba(255,140,40,.28),
-      0 0 22px rgba(255,210,90,.10);
+    text-shadow: none;
   }
+  .recordBox[data-glow="1"] .recordValue{ text-shadow: var(--recGlow); }
 
+  /* TIMER */
+  .timerBox{
+    transform: scale(var(--timScale));
+    transform-origin: center;
+    position:relative;
+  }
+  .timerBox small{ font-size: var(--timLabelFont) !important; }
   .timerValue{
     font-weight:1000;
-    color: var(--orange);
-    font-size:42px;
+    color: var(--timText);
+    font-size: var(--timValueFont);
     letter-spacing:2px;
-    text-shadow:
-      0 0 12px rgba(255,140,40,.28),
-      0 0 22px rgba(255,140,40,.14);
+    text-shadow:none;
   }
+  .timerBox[data-glow="1"] .timerValue{ text-shadow: var(--timGlow); }
 
-  /* x2 hint label on timer */
-  #x2hint{
+  /* x2 orange pill (appears last minute) */
+  .x2pill{
     display:none;
-    color: var(--gold);
-    font-weight:1000;
-    font-size:12px;
-    letter-spacing:.8px;
-    margin-top:4px;
-    text-shadow: 0 0 14px rgba(255,210,90,.18);
+    margin: 6px auto 0;
+    width: max-content;
+    background: var(--x2Bg);
+    color: var(--x2Text);
+    font-weight: 1000;
+    font-size: var(--x2Font);
+    padding: var(--x2PadY) var(--x2PadX);
+    border-radius: 14px;
+    letter-spacing: .6px;
+    box-shadow: 0 10px 22px rgba(0,0,0,.35);
   }
 
-  /* DANGER таймер (последняя минута) */
+  /* DANGER timer */
   @keyframes dangerPulse {
     0%   { transform: scale(1);   filter: drop-shadow(0 0 10px rgba(255,60,60,.35)); }
     50%  { transform: scale(1.12); filter: drop-shadow(0 0 22px rgba(255,60,60,.65)); }
@@ -277,9 +394,18 @@
     transform-origin:center;
   }
 
+  /* ROULETTE */
+  .rouletteBox{
+    transform: scale(var(--roulScale));
+    transform-origin: center;
+    color: var(--roulText);
+  }
+  .rouletteBox[data-glow="1"]{ text-shadow: var(--roulGlow); }
   .flagsMini{display:flex; gap:10px; align-items:center; justify-content:center;}
   .flagMiniImg{
-    width:28px;height:28px;border-radius:50%;
+    width: var(--roulFlag);
+    height: var(--roulFlag);
+    border-radius:50%;
     border:2px solid rgba(255,255,255,.18);
     box-shadow: 0 0 0 2px rgba(0,0,0,.35) inset, 0 0 18px rgba(140,120,255,.10);
     object-fit:cover;
@@ -288,6 +414,8 @@
 
   /* FIELD */
   .field{
+    transform: scale(var(--trkScale));
+    transform-origin: top center;
     border-radius:20px;
     border:2px solid rgba(140,120,255,.35);
     background: rgba(8,8,20,.25);
@@ -306,12 +434,20 @@
     overflow:hidden;
   }
 
+  /* ✅ ROAD movement (right -> left) */
   .tracks:before{
     content:"";
     position:absolute; inset:0;
     background: repeating-linear-gradient(90deg, var(--gridLine) 0 2px, transparent 2px 46px);
     opacity:.9;
     pointer-events:none;
+    animation: roadX 1s linear infinite;
+    will-change: background-position;
+    z-index:0;
+  }
+  @keyframes roadX{
+    from{ background-position: 0 0; }
+    to{ background-position: calc(var(--roadSpeed) * -1px) 0; }
   }
 
   .tracks:after{
@@ -320,29 +456,31 @@
     background: repeating-linear-gradient(180deg, rgba(0,0,0,.42) 0 3px, transparent 3px 96px);
     opacity:.85;
     pointer-events:none;
+    z-index:1;
   }
 
-  /* FINISH banner like the screenshot */
+  /* FINISH */
   .finishWrap{
     position:absolute;
-    right:34px; top:0; bottom:0;
-    width:86px;
+    right: var(--finishRight);
+    top: var(--finishTop);
+    bottom:0;
+    width: var(--finishW);
     pointer-events:none;
-    z-index:3;
+    z-index: var(--finishZ);
     display:flex;
     align-items:stretch;
     justify-content:center;
     filter: drop-shadow(0 0 20px rgba(255,60,60,.18));
+    opacity: var(--finishShow);
   }
 
   .finishBanner{
-    width:86px;
-    background: linear-gradient(180deg, rgba(0,0,0,.92), rgba(0,0,0,.75));
-    border-left:4px solid rgba(255,60,60,.9);
-    border-right:4px solid rgba(255,60,60,.9);
-    box-shadow:
-      0 0 18px rgba(255,60,60,.20),
-      0 0 28px rgba(255,210,90,.10);
+    width: var(--finishW);
+    background: linear-gradient(180deg, var(--finishBg1), var(--finishBg2));
+    border-left:4px solid var(--finishStripe);
+    border-right:4px solid var(--finishStripe);
+    box-shadow: 0 0 18px rgba(255,60,60,.20), 0 0 28px rgba(255,210,90,.10);
     position:relative;
     display:flex;
     flex-direction:column;
@@ -352,9 +490,7 @@
   }
 
   .checkTop, .checkBottom{
-    width:64px;
-    height:64px;
-    border-radius:10px;
+    width:64px;height:64px;border-radius:10px;
     background:
       repeating-linear-gradient(90deg, #fff 0 12px, #000 12px 24px),
       repeating-linear-gradient(180deg, #fff 0 12px, #000 12px 24px);
@@ -369,7 +505,7 @@
     font-weight:1000;
     font-size:44px;
     letter-spacing:2px;
-    color:#fff;
+    color: var(--finishTextColor);
     opacity:.92;
     text-shadow: 0 0 14px rgba(255,255,255,.12);
   }
@@ -380,11 +516,11 @@
     display:flex;
     flex-direction:column;
     gap:18px;
-    z-index:2;
+    z-index:4;
   }
 
   .lane{
-    height:92px;
+    height: var(--laneH);
     border-radius:14px;
     background: linear-gradient(180deg, rgba(40,40,70,.62), rgba(18,18,35,.62));
     border:1px solid rgba(255,255,255,.06);
@@ -409,7 +545,7 @@
     display:flex;
     align-items:center;
     gap:12px;
-    z-index:5; /* выше финиша */
+    z-index:5; /* above finish */
   }
 
   .badgeM{
@@ -436,11 +572,9 @@
   }
 
   .carImg{
-    width:120px;
+    width: var(--carW);
     height:auto;
-    filter:
-      drop-shadow(0 10px 18px rgba(0,0,0,.55))
-      drop-shadow(0 0 18px currentColor);
+    filter: drop-shadow(0 10px 18px rgba(0,0,0,.55)) drop-shadow(0 0 18px currentColor);
     will-change: transform;
   }
 
@@ -466,10 +600,9 @@
   }
   .turbo .carImg{
     animation: turboShake 520ms ease;
-    filter:
-      drop-shadow(0 14px 22px rgba(0,0,0,.65))
-      drop-shadow(0 0 26px rgba(120,210,255,.35))
-      drop-shadow(0 0 18px currentColor);
+    filter: drop-shadow(0 14px 22px rgba(0,0,0,.65))
+            drop-shadow(0 0 26px rgba(120,210,255,.35))
+            drop-shadow(0 0 18px currentColor);
   }
   @keyframes turboShake{
     0%{transform:translateX(0)}
@@ -491,18 +624,15 @@
   }
   .lane.leader .crown{display:block;}
 
-  /* флаг после машины — большой и поверх финиша */
   .flagAfterCar{
-    width:64px;
-    height:64px;
+    width: var(--afterFlag);
+    height: var(--afterFlag);
     border-radius:18px;
     border:3px solid rgba(255,255,255,.20);
     object-fit:cover;
-    box-shadow:
-      0 10px 22px rgba(0,0,0,.45),
-      0 0 26px rgba(255,210,90,.10);
+    box-shadow: 0 10px 22px rgba(0,0,0,.45), 0 0 26px rgba(255,210,90,.10);
     position:relative;
-    z-index:6; /* выше финиша */
+    z-index:6; /* above finish */
     flex:none;
   }
 
@@ -600,7 +730,7 @@
   .hint{color:var(--muted); font-size:12px; margin-top:10px; line-height:1.35}
   .modalActions{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:12px;}
 
-  /* WIN/FINISH OVERLAY */
+  /* WIN overlay */
   .winOverlay{
     position:fixed;
     inset:0;
@@ -653,7 +783,7 @@
     100% {opacity:0; transform:scale(.98) translateY(6px);}
   }
 
-  /* finish list rows (like screenshot) */
+  /* Finish results */
   .finishRow{
     display:flex;
     align-items:center;
@@ -669,13 +799,9 @@
     background: rgba(170,140,255,.55);
     color:#111;
   }
-  .finishLeft{
-    display:flex; align-items:center; gap:10px;
-    font-weight:1000;
-  }
+  .finishLeft{display:flex; align-items:center; gap:10px; font-weight:1000;}
   .finishPlace{
-    width:28px; height:28px;
-    border-radius:10px;
+    width:28px;height:28px;border-radius:10px;
     display:grid; place-items:center;
     background: rgba(0,0,0,.35);
     border:2px solid rgba(255,255,255,.10);
@@ -687,12 +813,40 @@
     color: var(--gold);
     text-shadow: 0 0 14px rgba(255,210,90,.20);
   }
-  .finishRow.top1 .finishMeters{
-    color:#111;
-    text-shadow:none;
-  }
+  .finishRow.top1 .finishMeters{ color:#111; text-shadow:none; }
 
-  /* адаптация */
+  /* customizer ui */
+  .segTabs{
+    display:flex; gap:10px; flex-wrap:wrap;
+    margin-top:8px;
+  }
+  .segBtn{
+    height:36px;
+    padding:0 12px;
+    border-radius:12px;
+    border:2px solid rgba(140,120,255,.28);
+    background: rgba(10,10,25,.40);
+    color:var(--text);
+    font-weight:1000;
+    cursor:pointer;
+  }
+  .segBtn.active{
+    border-color: rgba(255,210,90,.55);
+    box-shadow: 0 0 0 2px rgba(255,210,90,.14) inset;
+  }
+  .miniRow{
+    display:grid;
+    grid-template-columns: 1fr 180px;
+    gap:10px;
+    align-items:center;
+    padding:8px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.06);
+    background: rgba(20,20,40,.25);
+    margin-top:8px;
+  }
+  .range{ width:100%; }
+
   @media (max-width: 980px){
     .layout{grid-template-columns:1fr}
   }
@@ -706,17 +860,17 @@
 
       <!-- LEFT -->
       <aside class="left">
-        <div class="panel-title"><div class="cup"></div><span>ТУРНИРНАЯ ТАБЛИЦА</span></div>
+        <div class="panel-title"><div class="cup"></div><span id="titleTournament">ТУРНИРНАЯ ТАБЛИЦА</span></div>
 
-        <div class="winner">
-          <div class="label">ПРОШЛЫЙ ПОБЕДИТЕЛЬ</div>
+        <div class="winner" id="pastWinnerBox" data-glow="1">
+          <div class="label" id="titlePastWinner">ПРОШЛЫЙ ПОБЕДИТЕЛЬ</div>
           <div class="name" id="lastWinner">НЕТ</div>
         </div>
 
-        <div class="table">
+        <div class="table" id="tournamentTable" data-glow="1">
           <div class="thead">
-            <div>СТРАНЫ</div>
-            <div style="text-align:right;">ПОБЕДЫ</div>
+            <div id="titleCountries">СТРАНЫ</div>
+            <div style="text-align:right;" id="titleWins">ПОБЕДЫ</div>
           </div>
           <div id="tableBody"></div>
         </div>
@@ -728,16 +882,15 @@
 
           <!-- RECORD -->
           <div class="pill">
-            <div style="display:flex; align-items:center; gap:10px;">
+            <div class="recordBox" id="recordBox" data-glow="1" style="display:flex; align-items:center; gap:10px;">
               <svg class="trophyIcon" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#ffcf4a" d="M19 4h-3V3H8v1H5a1 1 0 0 0-1 1v2a5 5 0 0 0 4 4.9A6.02 6.02 0 0 0 11 15.8V18H8v2h8v-2h-3v-2.2a6.02 6.02 0 0 0 3-3.9A5 5 0 0 0 20 7V5a1 1 0 0 0-1-1ZM6 7V6h2v4.8A3 3 0 0 1 6 7Zm12 0a3 3 0 0 1-2 3.8V6h2v1Z"/>
               </svg>
 
-              <!-- флаг страны рекорда после кубка -->
               <img id="recordFlag" class="flagImg big" alt="record" style="display:none;" />
 
               <div style="text-align:left;">
-                <small style="font-size:13px;">РЕКОРД</small>
+                <small id="titleRecord" style="font-size:13px;">РЕКОРД</small>
                 <div class="recordValue" id="record">0</div>
                 <div style="display:none;" id="recordCountry">НЕТ</div>
               </div>
@@ -746,26 +899,28 @@
 
           <!-- TIMER -->
           <div class="pill">
-            <div style="text-align:center;">
-              <small style="font-size:13px;">ТАЙМЕР</small>
+            <div class="timerBox" id="timerBox" data-glow="1" style="text-align:center;">
+              <small id="titleTimer" style="font-size:13px;">ТАЙМЕР</small>
               <div class="timerValue" id="timer">10:00</div>
-              <div id="x2hint">x2 ОЧКИ В ПОСЛЕДНЮЮ МИНУТУ</div>
+
+              <!-- ✅ orange pill above timer on last minute -->
+              <div class="x2pill" id="x2pill">x2 ОЧКИ</div>
             </div>
           </div>
 
           <!-- ROULETTE -->
           <div class="pill">
-            <div style="text-align:center;">
-              <small style="font-size:13px;">РУЛЕТКА</small>
+            <div class="rouletteBox" id="rouletteBox" data-glow="0" style="text-align:center;">
+              <small id="titleRoulette" style="font-size:13px;">РУЛЕТКА</small>
               <div class="flagsMini" id="miniFlags"></div>
             </div>
           </div>
 
         </div>
 
-        <section class="field">
+        <section class="field" id="trackBox">
           <div class="tracks" id="tracks">
-            <div class="finishWrap">
+            <div class="finishWrap" id="finishWrap">
               <div class="finishBanner">
                 <div class="checkTop"></div>
                 <div class="finishText">FINISH</div>
@@ -873,10 +1028,63 @@
 <!-- SETTINGS MODAL -->
 <div class="modal" id="settingsModal" aria-hidden="true">
   <div class="modalCard">
-    <h3>Настройка: URL → +метры, бинды, страны</h3>
+    <h3>Настройка</h3>
+
+    <!-- ✅ SECTION / PRESET PICKER -->
+    <div class="box">
+      <div class="grid2">
+        <div>
+          <div class="lbl">Что настраиваем</div>
+          <select id="styleTarget" class="inp">
+            <option value="tournament">Турнирная таблица (слева)</option>
+            <option value="pastWinner">Прошлый победитель</option>
+            <option value="record">Рекорд</option>
+            <option value="timer">Таймер + x2</option>
+            <option value="roulette">Рулетка</option>
+            <option value="track">Трасса (дорога/машины)</option>
+            <option value="finish">Финиш (позиция/слой/цвет/стоп)</option>
+            <option value="global">Глобально (всё)</option>
+          </select>
+        </div>
+        <div>
+          <div class="lbl">Пресеты</div>
+          <div style="display:flex; gap:10px;">
+            <select id="presetSelect" class="inp"></select>
+            <button class="btn small" id="presetApply">ПРИМЕНИТЬ</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:10px;">
+        <div>
+          <div class="lbl">Сохранить текущие настройки как пресет</div>
+          <div style="display:flex; gap:10px;">
+            <input id="presetName" class="inp" placeholder="например: Неон 1 / Минимал" />
+            <button class="btn" id="presetSave">СОХРАНИТЬ</button>
+          </div>
+        </div>
+        <div>
+          <div class="lbl">Удаление пресета</div>
+          <button class="btn" id="presetDelete" style="width:100%;">УДАЛИТЬ ВЫБРАННЫЙ</button>
+        </div>
+      </div>
+
+      <div class="hint">Все настройки сохраняются в браузере (localStorage).</div>
+    </div>
+
+    <!-- ✅ STYLE CONTROLS (dynamic) -->
+    <div class="box">
+      <div class="lbl">Панель настроек выбранного блока</div>
+      <div id="styleControls"></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+        <button class="btn" id="styleResetBlock">СБРОСИТЬ ЭТОТ БЛОК</button>
+        <button class="btn" id="styleResetAll">СБРОСИТЬ ВСЁ</button>
+      </div>
+    </div>
 
     <!-- URL RULES -->
     <div class="box">
+      <h3 style="margin:0 0 10px; font-size:16px;">URL → +метры, бинды, страны</h3>
       <div class="grid2" style="grid-template-columns: 1fr 1fr 160px;">
         <div>
           <div class="lbl">СТРАНА</div>
@@ -891,89 +1099,89 @@
           <button class="btn" id="createRule" style="width:100%;">СОЗДАТЬ</button>
         </div>
       </div>
-    </div>
 
-    <div class="box">
-      <div style="color:var(--muted); font-weight:1000; font-size:12px; margin-bottom:8px;">Список правил URL</div>
-      <div id="rulesList"></div>
-      <div class="hint">
-        Ссылки идут через <b>#</b>: <b>#c=ru&amp;m=5</b> — чаще работает в сторонних программах.
-      </div>
-    </div>
-
-    <!-- KEYBINDS -->
-    <div class="box">
-      <div style="color:var(--muted); font-weight:1000; font-size:12px; margin-bottom:8px;">Горячие клавиши (бинды)</div>
-
-      <div class="grid2" style="grid-template-columns: 1fr 1fr 160px;">
-        <div>
-          <div class="lbl">СТРАНА</div>
-          <select id="bindCountry" class="inp"></select>
-        </div>
-        <div>
-          <div class="lbl">+ МЕТРОВ</div>
-          <input class="inp" id="bindMeters" type="number" value="5" />
-        </div>
-        <div>
-          <div class="lbl">&nbsp;</div>
-          <button class="btn" id="bindPickKey" style="width:100%;">ВЫБРАТЬ КЛАВИШУ</button>
+      <div class="box">
+        <div style="color:var(--muted); font-weight:1000; font-size:12px; margin-bottom:8px;">Список правил URL</div>
+        <div id="rulesList"></div>
+        <div class="hint">
+          Ссылки идут через <b>#</b>: <b>#c=ru&amp;m=5</b> — чаще работает в сторонних программах.
         </div>
       </div>
 
-      <div style="margin-top:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <div style="min-width:260px; flex:1;">
-          <div class="lbl">КОД КЛАВИШИ</div>
-          <input class="inp" id="bindKeyCode" placeholder="например KeyQ, Digit1, F8" readonly />
+      <!-- KEYBINDS -->
+      <div class="box">
+        <div style="color:var(--muted); font-weight:1000; font-size:12px; margin-bottom:8px;">Горячие клавиши (бинды)</div>
+
+        <div class="grid2" style="grid-template-columns: 1fr 1fr 160px;">
+          <div>
+            <div class="lbl">СТРАНА</div>
+            <select id="bindCountry" class="inp"></select>
+          </div>
+          <div>
+            <div class="lbl">+ МЕТРОВ</div>
+            <input class="inp" id="bindMeters" type="number" value="5" />
+          </div>
+          <div>
+            <div class="lbl">&nbsp;</div>
+            <button class="btn" id="bindPickKey" style="width:100%;">ВЫБРАТЬ КЛАВИШУ</button>
+          </div>
         </div>
-        <button class="btn" id="bindCreate">ДОБАВИТЬ БИНД</button>
+
+        <div style="margin-top:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <div style="min-width:260px; flex:1;">
+            <div class="lbl">КОД КЛАВИШИ</div>
+            <input class="inp" id="bindKeyCode" placeholder="например KeyQ, Digit1, F8" readonly />
+          </div>
+          <button class="btn" id="bindCreate">ДОБАВИТЬ БИНД</button>
+        </div>
+
+        <div class="hint">Бинды не срабатывают, когда ты печатаешь в поле ввода.</div>
+        <div id="bindsList" style="margin-top:10px;"></div>
       </div>
 
-      <div class="hint">Бинды не срабатывают, когда ты печатаешь в поле ввода.</div>
-      <div id="bindsList" style="margin-top:10px;"></div>
-    </div>
+      <!-- COUNTRIES MANAGER -->
+      <div class="box">
+        <div style="color:var(--muted); font-weight:1000; font-size:12px; margin-bottom:8px;">Страны (добавление вручную)</div>
 
-    <!-- COUNTRIES MANAGER -->
-    <div class="box">
-      <div style="color:var(--muted); font-weight:1000; font-size:12px; margin-bottom:8px;">Страны (добавление вручную)</div>
-
-      <div class="grid2" style="grid-template-columns: 1fr 1fr;">
-        <div>
-          <div class="lbl">Поиск по списку</div>
-          <input class="inp" id="countrySearch" placeholder="например: japan / япония / kz" />
+        <div class="grid2" style="grid-template-columns: 1fr 1fr;">
+          <div>
+            <div class="lbl">Поиск по списку</div>
+            <input class="inp" id="countrySearch" placeholder="например: japan / япония / kz" />
+          </div>
+          <div>
+            <div class="lbl">Найденные</div>
+            <div id="countryResults" class="box" style="margin:0; padding:10px; max-height:160px; overflow:auto;"></div>
+          </div>
         </div>
-        <div>
-          <div class="lbl">Найденные</div>
-          <div id="countryResults" class="box" style="margin:0; padding:10px; max-height:160px; overflow:auto;"></div>
-        </div>
-      </div>
 
-      <div class="hint" style="margin-top:10px;">
-        Иконка берётся с <b>flagcdn.com</b> по ISO-коду (2 буквы): <b>ru, us, jp, fr</b>.
-      </div>
-
-      <div class="grid2" style="grid-template-columns: 1fr 1fr 160px; margin-top:10px;">
-        <div>
-          <div class="lbl">Название</div>
-          <input class="inp" id="newCountryName" placeholder="Например: Япония" />
+        <div class="hint" style="margin-top:10px;">
+          Иконка берётся с <b>flagcdn.com</b> по ISO-коду (2 буквы): <b>ru, us, jp, fr</b>.
         </div>
-        <div>
-          <div class="lbl">ISO-код (2 буквы)</div>
-          <input class="inp" id="newCountryCode" placeholder="Например: jp" />
-        </div>
-        <div>
-          <div class="lbl">&nbsp;</div>
-          <button class="btn" id="addCountryBtn" style="width:100%;">ДОБАВИТЬ</button>
-        </div>
-      </div>
 
-      <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
-        <img id="newFlagPreview" class="flagImg" alt="preview" style="width:34px;height:34px;" />
-        <div style="color:var(--muted); font-weight:900; font-size:12px;">Предпросмотр флага</div>
-      </div>
+        <div class="grid2" style="grid-template-columns: 1fr 1fr 160px; margin-top:10px;">
+          <div>
+            <div class="lbl">Название</div>
+            <input class="inp" id="newCountryName" placeholder="Например: Япония" />
+          </div>
+          <div>
+            <div class="lbl">ISO-код (2 буквы)</div>
+            <input class="inp" id="newCountryCode" placeholder="Например: jp" />
+          </div>
+          <div>
+            <div class="lbl">&nbsp;</div>
+            <button class="btn" id="addCountryBtn" style="width:100%;">ДОБАВИТЬ</button>
+          </div>
+        </div>
 
-      <div style="margin-top:10px;">
-        <div class="lbl">Список стран (удаление)</div>
-        <div id="countriesList" class="box" style="margin:0; padding:10px; max-height:220px; overflow:auto;"></div>
+        <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+          <img id="newFlagPreview" class="flagImg" alt="preview" style="width:34px;height:34px;" />
+          <div style="color:var(--muted); font-weight:900; font-size:12px;">Предпросмотр флага</div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <div class="lbl">Список стран (удаление)</div>
+          <div id="countriesList" class="box" style="margin:0; padding:10px; max-height:220px; overflow:auto;"></div>
+        </div>
       </div>
     </div>
 
@@ -995,7 +1203,7 @@
   </div>
 </div>
 
-<!-- FINISH RESULTS OVERLAY (like screenshot) -->
+<!-- FINISH RESULTS OVERLAY -->
 <div class="winOverlay" id="finishOverlay">
   <div class="backdrop"></div>
   <div class="card" style="min-width:360px; max-width:560px; animation:none; opacity:1; transform:none;">
@@ -1019,11 +1227,15 @@
   // =============================
   // Storage keys
   // =============================
-  const LS_STATE     = "race_state_v9";
-  const LS_RULES     = "race_rules_v9";
-  const LS_CFG       = "race_cfg_v6";
-  const LS_BINDS     = "race_binds_v1";
-  const LS_COUNTRIES = "race_countries_v1";
+  const LS_STATE     = "race_state_v10";
+  const LS_RULES     = "race_rules_v10";
+  const LS_CFG       = "race_cfg_v7";
+  const LS_BINDS     = "race_binds_v2";
+  const LS_COUNTRIES = "race_countries_v2";
+
+  // ✅ styles + presets
+  const LS_STYLE     = "race_style_v1";
+  const LS_PRESETS   = "race_style_presets_v1";
 
   function loadJSON(key, fallback){
     try{
@@ -1064,9 +1276,7 @@
       .map(c=>({ name: normalizeName(c.name), code: normalizeCode(c.code), color: c.color || "" }))
       .filter(c=>c.name && c.code);
   }
-  function saveCountries(list){
-    saveJSON(LS_COUNTRIES, list);
-  }
+  function saveCountries(list){ saveJSON(LS_COUNTRIES, list); }
 
   let COUNTRIES = loadCountries();
 
@@ -1118,6 +1328,122 @@
   const cfgDefault = { soundEnabled:true, volume:0.6, turboThreshold:50 };
   let cfg = { ...cfgDefault, ...loadJSON(LS_CFG, {}) };
   function saveCfg(){ saveJSON(LS_CFG, cfg); }
+
+  // =============================
+  // ✅ STYLE STATE + APPLY
+  // =============================
+  const styleDefault = {
+    gScale:1, gText:"#e9e9ff", gGlowOn:1,
+
+    ttScale:1.12, ttRowPadY:12, ttFlag:50, ttBadge:34,
+    ttWinsFont:20, ttWinsW:58, ttRankFont:13,
+    ttText:"#e9e9ff", ttGlowOn:1,
+
+    pwScale:1.0, pwText:"#e9e9ff", pwGlowOn:1,
+
+    recScale:1.0, recLabelFont:13, recValueFont:28,
+    recText:"#ff8a2a", recGlowOn:1,
+
+    timScale:1.0, timLabelFont:13, timValueFont:44,
+    timText:"#ff8a2a", timGlowOn:1,
+
+    x2Show:1, x2Bg:"#ff8a2a", x2Text:"#ffffff",
+    x2Font:14, x2PadY:8, x2PadX:12,
+
+    roulScale:1.0, roulFlag:30, roulText:"#e9e9ff", roulGlowOn:0,
+
+    trkScale:1.0, laneH:92, carW:120, afterFlag:64, finishW:86,
+    roadSpeed:110,
+
+    // ✅ FINISH
+    finishShow:1,
+    finishRight:34,
+    finishTop:0,
+    finishZ:3,
+    finishStripe:"rgba(255,60,60,.9)",
+    finishTextColor:"#ffffff",
+    finishBg1:"rgba(0,0,0,.92)",
+    finishBg2:"rgba(0,0,0,.75)",
+    finishStopEnabled:0,
+    finishStopGap:6,
+  };
+
+  let style = { ...styleDefault, ...loadJSON(LS_STYLE, {}) };
+
+  function setRootVar(name, value){
+    document.documentElement.style.setProperty(`--${name}`, String(value));
+  }
+  function applyStyle(){
+    // globals
+    setRootVar("gScale", style.gScale);
+    setRootVar("gText", style.gText);
+    setRootVar("gGlowOn", style.gGlowOn);
+
+    // tournament
+    setRootVar("ttScale", style.ttScale);
+    setRootVar("ttRowPadY", style.ttRowPadY + "px");
+    setRootVar("ttFlag", style.ttFlag + "px");
+    setRootVar("ttBadge", style.ttBadge + "px");
+    setRootVar("ttWinsFont", style.ttWinsFont + "px");
+    setRootVar("ttWinsW", style.ttWinsW + "px");
+    setRootVar("ttRankFont", style.ttRankFont + "px");
+    setRootVar("ttText", style.ttText);
+    document.getElementById("tournamentTable").dataset.glow = String(style.ttGlowOn);
+
+    // past winner
+    setRootVar("pwScale", style.pwScale);
+    setRootVar("pwText", style.pwText);
+    document.getElementById("pastWinnerBox").dataset.glow = String(style.pwGlowOn);
+
+    // record
+    setRootVar("recScale", style.recScale);
+    setRootVar("recLabelFont", style.recLabelFont + "px");
+    setRootVar("recValueFont", style.recValueFont + "px");
+    setRootVar("recText", style.recText);
+    document.getElementById("recordBox").dataset.glow = String(style.recGlowOn);
+
+    // timer
+    setRootVar("timScale", style.timScale);
+    setRootVar("timLabelFont", style.timLabelFont + "px");
+    setRootVar("timValueFont", style.timValueFont + "px");
+    setRootVar("timText", style.timText);
+    document.getElementById("timerBox").dataset.glow = String(style.timGlowOn);
+
+    // x2 pill
+    setRootVar("x2Show", style.x2Show);
+    setRootVar("x2Bg", style.x2Bg);
+    setRootVar("x2Text", style.x2Text);
+    setRootVar("x2Font", style.x2Font + "px");
+    setRootVar("x2PadY", style.x2PadY + "px");
+    setRootVar("x2PadX", style.x2PadX + "px");
+
+    // roulette
+    setRootVar("roulScale", style.roulScale);
+    setRootVar("roulFlag", style.roulFlag + "px");
+    setRootVar("roulText", style.roulText);
+    document.getElementById("rouletteBox").dataset.glow = String(style.roulGlowOn);
+
+    // track
+    setRootVar("trkScale", style.trkScale);
+    setRootVar("laneH", style.laneH + "px");
+    setRootVar("carW", style.carW + "px");
+    setRootVar("afterFlag", style.afterFlag + "px");
+    setRootVar("finishW", style.finishW + "px");
+    setRootVar("roadSpeed", style.roadSpeed);
+
+    // ✅ finish
+    setRootVar("finishShow", Number(style.finishShow) ? 1 : 0);
+    setRootVar("finishRight", (Number(style.finishRight)||0) + "px");
+    setRootVar("finishTop", (Number(style.finishTop)||0) + "px");
+    setRootVar("finishZ", String(Number(style.finishZ)||3));
+    setRootVar("finishStripe", style.finishStripe);
+    setRootVar("finishTextColor", style.finishTextColor);
+    setRootVar("finishBg1", style.finishBg1);
+    setRootVar("finishBg2", style.finishBg2);
+    setRootVar("finishStopEnabled", Number(style.finishStopEnabled) ? 1 : 0);
+    setRootVar("finishStopGap", String(Number(style.finishStopGap)||0));
+  }
+  function saveStyle(){ saveJSON(LS_STYLE, style); }
 
   // =============================
   // Audio
@@ -1172,11 +1498,11 @@
   // =============================
   // Cross-tab auto-update
   // =============================
-  const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("race_channel_v6") : null;
+  const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("race_channel_v7") : null;
 
   function broadcastState(){
     if(!bc) return;
-    bc.postMessage({ type:"stateSync", state, cfg, countries: COUNTRIES });
+    bc.postMessage({ type:"stateSync", state, cfg, countries: COUNTRIES, style });
   }
 
   if(bc){
@@ -1199,6 +1525,11 @@
           renderLanes();
         }
         if(msg.cfg) cfg = { ...cfgDefault, ...msg.cfg };
+        if(msg.style){
+          style = { ...styleDefault, ...msg.style };
+          applyStyle(); saveStyle();
+          renderMiniFlags(); renderTable(); renderLanes(); renderHeader(); renderTimer();
+        }
         if(msg.state) mergeStateFromRemote(msg.state);
         renderAll();
       }
@@ -1225,6 +1556,11 @@
       renderMiniFlags();
       renderLanes();
       renderAll();
+    }
+    if(e.key === LS_STYLE && e.newValue){
+      style = { ...styleDefault, ...loadJSON(LS_STYLE,{}) };
+      applyStyle();
+      renderMiniFlags(); renderTable(); renderLanes(); renderHeader(); renderTimer();
     }
   });
 
@@ -1316,8 +1652,7 @@
   const recordFlagEl = document.getElementById("recordFlag");
   const lastWinnerEl = document.getElementById("lastWinner");
   const timerEl = document.getElementById("timer");
-  const x2hintEl = document.getElementById("x2hint");
-
+  const x2pillEl = document.getElementById("x2pill");
   const miniFlagsEl = document.getElementById("miniFlags");
 
   const selCountryRule = document.getElementById("country");
@@ -1347,7 +1682,7 @@
   }
 
   // =============================
-  // Table (flags only + top 3 styling)
+  // Table
   // =============================
   function renderTable(){
     const list = [...state.countries].sort((a,b)=>{
@@ -1378,7 +1713,7 @@
   }
 
   // =============================
-  // ✅ УМНОЕ ПРЕОБРАЗОВАНИЕ ОЧКОВ В ПОЗИЦИЮ
+  // ✅ Smart meters -> position
   // =============================
   function metersToProgress01(meters){
     const vals = state.countries.map(x=>x.meters);
@@ -1425,7 +1760,6 @@
           <div class="carHalo"></div>
           <div class="badgeM">${st.meters} M</div>
           <img class="carImg" src="${CAR_SRC[c.name] || carSVG(c.color || "#8c78ff")}" alt="car">
-          <!-- только флаг, большой, поверх финиша -->
           <img class="flagAfterCar" alt="${c.code}" src="${flagUrl(c.code)}">
         </div>
       `;
@@ -1437,13 +1771,22 @@
   }
 
   function updateCars(pop=true){
+    const stopEnabled = Number(style.finishStopEnabled) ? 1 : 0;
+    const stopGap = Math.max(0, Math.min(25, Number(style.finishStopGap) || 0)); // percent points
+
     COUNTRIES.forEach(c=>{
       const st = state.countries.find(x=>x.name===c.name);
       const wrap = lanesEl.querySelector(`.carWrap[data-name="${CSS.escape(c.name)}"]`);
       if(!wrap || !st) return;
 
-      const p01 = metersToProgress01(st.meters); // 0..1
-      const left = 3 + p01 * 72;                 // 3%..75%
+      const p01 = metersToProgress01(st.meters);
+      let left = 3 + p01 * 72; // 3%..75%
+
+      // ✅ stop before finish (simple, stable)
+      if(stopEnabled){
+        const maxLeft = (3 + 72) - stopGap; // e.g. 75 - 6 = 69
+        left = Math.min(left, maxLeft);
+      }
 
       const last = wrap.__lastMeters ?? st.meters;
       const delta = Math.abs(st.meters - last);
@@ -1487,7 +1830,6 @@
     recordCountryEl.textContent = state.recordCountry || "НЕТ";
     lastWinnerEl.textContent = state.lastWinner;
 
-    // record flag after trophy
     if(state.recordCountry && state.recordCountry !== "НЕТ" && window.NAME_TO_CODE[state.recordCountry]){
       recordFlagEl.style.display = "block";
       recordFlagEl.src = flagUrl(window.NAME_TO_CODE[state.recordCountry]);
@@ -1503,11 +1845,14 @@
     const ss = String(state.timeLeft%60).padStart(2,"0");
     timerEl.textContent = `${mm}:${ss}`;
 
-    const isX2 = (state.timeLeft > 0 && state.timeLeft <= 60);
-    x2hintEl.style.display = isX2 ? "block" : "none";
+    const isLastMinute = (state.timeLeft > 0 && state.timeLeft <= 60);
 
-    // красный "горит" + пульс
-    timerEl.classList.toggle("danger", isX2);
+    // red danger pulse
+    timerEl.classList.toggle("danger", isLastMinute);
+
+    // ✅ x2 orange pill ABOVE timer
+    const allow = (style.x2Show === 1 || style.x2Show === "1");
+    x2pillEl.style.display = (allow && isLastMinute) ? "block" : "none";
   }
 
   // =============================
@@ -1527,7 +1872,7 @@
   }
 
   // =============================
-  // Finish overlay (like screenshot)
+  // Finish overlay
   // =============================
   const finishOverlay = document.getElementById("finishOverlay");
   const finishWinnerName = document.getElementById("finishWinnerName");
@@ -1560,8 +1905,6 @@
     sorted.forEach((c, i)=>{
       const row = document.createElement("div");
       row.className = "finishRow" + (i===0 ? " top1" : "");
-
-      // simple medal icons for top 3
       const medal = i===0 ? "🥇" : i===1 ? "🥈" : i===2 ? "🥉" : "";
       row.innerHTML = `
         <div class="finishLeft">
@@ -1894,13 +2237,12 @@
   // =============================
   // Keybinds
   // =============================
-  const LS_BINDS_LOCAL = LS_BINDS;
   const bindsListEl = document.getElementById("bindsList");
   const bindKeyCodeEl = document.getElementById("bindKeyCode");
   let capturingKey = false;
 
-  function loadBinds(){ return loadJSON(LS_BINDS_LOCAL, []); }
-  function saveBinds(b){ saveJSON(LS_BINDS_LOCAL, b); }
+  function loadBinds(){ return loadJSON(LS_BINDS, []); }
+  function saveBinds(b){ saveJSON(LS_BINDS, b); }
 
   function renderBinds(){
     const binds = loadBinds();
@@ -2147,6 +2489,263 @@
   };
 
   // =============================
+  // ✅ STYLE UI (target picker + presets)
+  // =============================
+  const styleTargetEl = document.getElementById("styleTarget");
+  const styleControlsEl = document.getElementById("styleControls");
+
+  const presetSelectEl = document.getElementById("presetSelect");
+  const presetNameEl = document.getElementById("presetName");
+
+  function loadPresets(){
+    const p = loadJSON(LS_PRESETS, null);
+    return (p && typeof p === "object") ? p : {};
+  }
+  function savePresets(p){ saveJSON(LS_PRESETS, p); }
+
+  function renderPresetSelect(){
+    const presets = loadPresets();
+    presetSelectEl.innerHTML = "";
+    const names = Object.keys(presets).sort((a,b)=>a.localeCompare(b,"ru"));
+    const def = document.createElement("option");
+    def.value = "";
+    def.textContent = "— выбери пресет —";
+    presetSelectEl.appendChild(def);
+    names.forEach(n=>{
+      const o = document.createElement("option");
+      o.value = n;
+      o.textContent = n;
+      presetSelectEl.appendChild(o);
+    });
+  }
+
+  function uiRow(label, inputHtml){
+    const div = document.createElement("div");
+    div.className = "miniRow";
+    div.innerHTML = `<div style="font-weight:1000;color:var(--text)">${label}</div><div>${inputHtml}</div>`;
+    return div;
+  }
+
+  function renderStyleControls(){
+    const target = styleTargetEl.value;
+    styleControlsEl.innerHTML = "";
+
+    const rows = [];
+
+    function addRange(key, label, min, max, step){
+      const val = style[key];
+      const r = uiRow(label, `<input class="range" type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-skey="${key}"><div style="color:var(--muted);font-weight:900;margin-top:4px" data-sval="${key}">${val}</div>`);
+      rows.push(r);
+    }
+    function addColor(key, label){
+      const val = style[key];
+      const r = uiRow(label, `<input type="color" value="${val}" data-skey="${key}" style="width:100%;height:40px;border-radius:12px;border:2px solid rgba(140,120,255,.25);background:transparent;">`);
+      rows.push(r);
+    }
+    function addToggle(key, label){
+      const val = Number(style[key]) ? 1 : 0;
+      const r = uiRow(label, `<label style="display:flex;align-items:center;gap:10px;justify-content:flex-end;">
+        <input type="checkbox" ${val? "checked":""} data-skey="${key}">
+        <span style="color:var(--muted);font-weight:900;">${val? "ВКЛ":"ВЫКЛ"}</span>
+      </label>`);
+      rows.push(r);
+    }
+
+    if(target === "tournament"){
+      addRange("ttScale","Масштаб блока",0.8,1.6,0.01);
+      addRange("ttRowPadY","Высота строки (padding)",8,22,1);
+      addRange("ttFlag","Размер флага",34,74,1);
+      addRange("ttBadge","Размер номера",26,48,1);
+      addRange("ttRankFont","Шрифт номера",11,18,1);
+      addRange("ttWinsFont","Шрифт побед",14,30,1);
+      addRange("ttWinsW","Ширина блока побед",44,90,1);
+      addColor("ttText","Цвет текста");
+      addToggle("ttGlowOn","Неон (свечение текста)");
+    }
+
+    if(target === "pastWinner"){
+      addRange("pwScale","Масштаб блока",0.8,1.6,0.01);
+      addColor("pwText","Цвет имени победителя");
+      addToggle("pwGlowOn","Неон (свечение)");
+    }
+
+    if(target === "record"){
+      addRange("recScale","Масштаб блока",0.8,1.6,0.01);
+      addRange("recLabelFont","Шрифт подписи",10,18,1);
+      addRange("recValueFont","Шрифт значения",18,44,1);
+      addColor("recText","Цвет значения");
+      addToggle("recGlowOn","Неон (свечение)");
+    }
+
+    if(target === "timer"){
+      addRange("timScale","Масштаб блока",0.8,1.6,0.01);
+      addRange("timLabelFont","Шрифт подписи",10,18,1);
+      addRange("timValueFont","Шрифт таймера",24,64,1);
+      addColor("timText","Цвет таймера");
+      addToggle("timGlowOn","Неон (свечение таймера)");
+
+      styleControlsEl.appendChild(document.createElement("div")).innerHTML =
+        `<div style="margin-top:14px;color:var(--muted);font-weight:1000;">x2 плашка (последняя минута)</div>`;
+      addToggle("x2Show","Показывать x2 плашку");
+      addColor("x2Bg","Цвет фона x2");
+      addColor("x2Text","Цвет текста x2");
+      addRange("x2Font","Шрифт x2",10,22,1);
+      addRange("x2PadY","Отступ Y",4,16,1);
+      addRange("x2PadX","Отступ X",8,22,1);
+    }
+
+    if(target === "roulette"){
+      addRange("roulScale","Масштаб блока",0.8,1.6,0.01);
+      addRange("roulFlag","Размер мини-флага",18,48,1);
+      addColor("roulText","Цвет текста");
+      addToggle("roulGlowOn","Неон (свечение)");
+    }
+
+    if(target === "track"){
+      addRange("trkScale","Масштаб трассы",0.8,1.6,0.01);
+      addRange("laneH","Высота дорожки",70,140,1);
+      addRange("carW","Ширина машины",80,180,1);
+      addRange("afterFlag","Размер флага после машины",40,100,1);
+      addRange("finishW","Ширина финиша",70,120,1);
+      addRange("roadSpeed","Скорость дороги",40,240,1);
+    }
+
+    if(target === "finish"){
+      addToggle("finishShow","Показывать финиш");
+      addRange("finishZ","Слой (z-index)",1,8,1);
+      addRange("finishRight","Сдвиг вправо/влево (px)",0,120,1);
+      addRange("finishTop","Сдвиг сверху (px)",0,60,1);
+      styleControlsEl.appendChild(document.createElement("div")).innerHTML =
+        `<div style="margin-top:14px;color:var(--muted);font-weight:1000;">Цвета финиша</div>`;
+      // цвета через color input (поддерживает hex), для rgba оставь как есть — можно руками в localStorage, но тут делаем удобно:
+      addColor("finishTextColor","Цвет текста FINISH");
+      // полосы/фон — оставляем в виде простых inputs (т.к. rgba). Сделаем текстовые поля:
+      rows.push(uiRow("Цвет полос (rgba/hex)", `<input class="inp" data-skey="finishStripe" value="${style.finishStripe}">`));
+      rows.push(uiRow("Фон верх (rgba/hex)", `<input class="inp" data-skey="finishBg1" value="${style.finishBg1}">`));
+      rows.push(uiRow("Фон низ (rgba/hex)", `<input class="inp" data-skey="finishBg2" value="${style.finishBg2}">`));
+
+      styleControlsEl.appendChild(document.createElement("div")).innerHTML =
+        `<div style="margin-top:14px;color:var(--muted);font-weight:1000;">Остановка перед финишем</div>`;
+      addToggle("finishStopEnabled","Останавливать машины до линии");
+      addRange("finishStopGap","Зазор до линии (% пункты)",0,25,1);
+    }
+
+    if(target === "global"){
+      addRange("gScale","Масштаб ВСЕГО",0.8,1.25,0.01);
+      addColor("gText","Глобальный цвет текста (частично)");
+      addToggle("gGlowOn","Глобальное свечение (частично)");
+    }
+
+    rows.forEach(r=>styleControlsEl.appendChild(r));
+
+    // bind listeners
+    styleControlsEl.querySelectorAll("[data-skey]").forEach(el=>{
+      const key = el.getAttribute("data-skey");
+      if(!key) return;
+
+      if(el.type === "range"){
+        el.addEventListener("input", ()=>{
+          const v = Number(el.value);
+          style[key] = v;
+          const out = styleControlsEl.querySelector(`[data-sval="${CSS.escape(key)}"]`);
+          if(out) out.textContent = String(v);
+          applyStyle(); saveStyle();
+          renderMiniFlags(); renderTable(); renderLanes(); renderHeader(); renderTimer();
+          saveState(true);
+        });
+      }else if(el.type === "color"){
+        el.addEventListener("input", ()=>{
+          style[key] = el.value;
+          applyStyle(); saveStyle();
+          renderTable(); renderHeader(); renderTimer();
+          saveState(true);
+        });
+      }else if(el.type === "checkbox"){
+        el.addEventListener("change", ()=>{
+          style[key] = el.checked ? 1 : 0;
+          applyStyle(); saveStyle();
+          renderMiniFlags(); renderTable(); renderLanes(); renderHeader(); renderTimer();
+          saveState(true);
+          renderStyleControls();
+        });
+      }else{
+        // text inputs (rgba/hex)
+        el.addEventListener("input", ()=>{
+          style[key] = String(el.value || "").trim().slice(0,64);
+          applyStyle(); saveStyle();
+          renderLanes();
+          saveState(true);
+        });
+      }
+    });
+  }
+
+  styleTargetEl.addEventListener("change", renderStyleControls);
+
+  document.getElementById("styleResetAll").onclick = ()=>{
+    style = { ...styleDefault };
+    saveStyle(); applyStyle();
+    renderMiniFlags(); renderTable(); renderLanes(); renderHeader(); renderTimer();
+    saveState(true);
+    renderStyleControls();
+  };
+
+  document.getElementById("styleResetBlock").onclick = ()=>{
+    const t = styleTargetEl.value;
+    const fresh = { ...styleDefault };
+    const keysByBlock = {
+      tournament:["ttScale","ttRowPadY","ttFlag","ttBadge","ttWinsFont","ttWinsW","ttRankFont","ttText","ttGlowOn"],
+      pastWinner:["pwScale","pwText","pwGlowOn"],
+      record:["recScale","recLabelFont","recValueFont","recText","recGlowOn"],
+      timer:["timScale","timLabelFont","timValueFont","timText","timGlowOn","x2Show","x2Bg","x2Text","x2Font","x2PadY","x2PadX"],
+      roulette:["roulScale","roulFlag","roulText","roulGlowOn"],
+      track:["trkScale","laneH","carW","afterFlag","finishW","roadSpeed"],
+      finish:["finishShow","finishRight","finishTop","finishZ","finishStripe","finishTextColor","finishBg1","finishBg2","finishStopEnabled","finishStopGap"],
+      global:["gScale","gText","gGlowOn"],
+    };
+    const keys = keysByBlock[t] || [];
+    keys.forEach(k=>style[k] = fresh[k]);
+    saveStyle(); applyStyle();
+    renderMiniFlags(); renderTable(); renderLanes(); renderHeader(); renderTimer();
+    saveState(true);
+    renderStyleControls();
+  };
+
+  // Presets
+  document.getElementById("presetSave").onclick = ()=>{
+    const name = String(presetNameEl.value || "").trim().slice(0,40);
+    if(!name){ alert("Введите название пресета"); return; }
+    const presets = loadPresets();
+    presets[name] = { ...style };
+    savePresets(presets);
+    renderPresetSelect();
+    presetSelectEl.value = name;
+    presetNameEl.value = "";
+  };
+
+  document.getElementById("presetApply").onclick = ()=>{
+    const name = presetSelectEl.value;
+    if(!name){ alert("Выбери пресет"); return; }
+    const presets = loadPresets();
+    if(!presets[name]){ alert("Пресет не найден"); return; }
+    style = { ...styleDefault, ...presets[name] };
+    saveStyle(); applyStyle();
+    renderMiniFlags(); renderTable(); renderLanes(); renderHeader(); renderTimer();
+    saveState(true);
+    renderStyleControls();
+  };
+
+  document.getElementById("presetDelete").onclick = ()=>{
+    const name = presetSelectEl.value;
+    if(!name){ alert("Выбери пресет"); return; }
+    const presets = loadPresets();
+    if(!presets[name]) return;
+    delete presets[name];
+    savePresets(presets);
+    renderPresetSelect();
+  };
+
+  // =============================
   // Settings open
   // =============================
   document.getElementById("btnSettings").onclick = ()=>{
@@ -2155,6 +2754,8 @@
     renderRules();
     renderBinds();
     updateNewFlagPreview();
+    renderPresetSelect();
+    renderStyleControls();
   };
   document.getElementById("settingsClose").onclick = ()=>{
     closeModal(settingsModal);
@@ -2213,6 +2814,8 @@
   // Init
   // =============================
   function init(){
+    applyStyle();
+
     renderMiniFlags();
     refreshAllCountryUI();
     renderHeader();
